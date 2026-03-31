@@ -1,2 +1,190 @@
+; ============================================================
+; Control Memory Initialization File (CMData.coe)
+; ============================================================
+; Microinstruction format (32-bit):
+;   Bit  0  C0  : CAR <= CAR+1
+;   Bit  1  C1  : CAR <= dispatch(MBR[15:8])  (opcode->CAR lookup)
+;   Bit  2  C2  : CAR <= 0  (return to fetch cycle)
+;   Bit  3  C3  : MBR <= IM[MAR] (fetch phase) | MBR <= DM[MAR] (exec phase)
+;   Bit  4  C4  : IR  <= MBR[15:8]
+;   Bit  5  C5  : MAR <= MBR[7:0]
+;   Bit  6  C6  : PC  <= PC+1
+;   Bit  7  C7  : BR  <= MBR
+;   Bit  8  C8  : ACC <= 0
+;   Bit  9  C9  : ACC <= ACC+BR
+;   Bit 10  C10 : MAR <= PC
+;   Bit 11  C11 : MBR <= ACC
+;   Bit 12  C12 : DM[MAR] <= MBR  (data memory write enable)
+;   Bit 13  C13 : ACC <= ACC-BR
+;   Bit 14  C14 : ACC <= ACC AND BR
+;   Bit 15  C15 : ACC <= ACC OR BR
+;   Bit 16  C16 : ACC <= NOT ACC
+;   Bit 17  C17 : ACC <= BR >> 1  (logical shift right)
+;   Bit 18  C18 : ACC <= BR << 1  (logical shift left)
+;   Bit 19  C19 : {MR,ACC} <= ACC * BR  (unsigned 32-bit multiply)
+;   Bit 20  C20 : ACC <= BR
+;   Bit 21  C21 : HALT  (freeze CAR)
+;   Bit 22  C22 : PC  <= MAR  (unconditional jump)
+;   Bit 23  C23 : if ACC[15]=0: PC <= MAR  (JMPGEZ)
+;   Bits 31:24  : unused (zero)
+;
+; CAR address map:
+;   0x00-0x02  Fetch cycle (common prefix for all instructions)
+;   0x10-0x11  STORE X
+;   0x20-0x22  LOAD X
+;   0x30-0x32  ADD X
+;   0x38-0x3A  SUB X
+;   0x40       JMPGEZ X
+;   0x48       JMP X
+;   0x50       HALT
+;   0x58-0x5A  MPY X
+;   0x68-0x6A  AND X
+;   0x70-0x72  OR X
+;   0x78       NOT
+;   0x80-0x82  SHIFTR X
+;   0x88-0x8A  SHIFTL X
+; ============================================================
+
 memory_initialization_radix=16;
-memory_initialization_vector=00000000;
+memory_initialization_vector=
+; --- Fetch Cycle (CAR 0x00-0x0F) ---
+; 0x00 Fetch T1 : MAR<=PC (C10), C0
+00000401,
+; 0x01 Fetch T2 : MBR<=IM[MAR] (C3), C0
+00000009,
+; 0x02 Fetch T3 : IR<=MBR[15:8](C4), MAR<=MBR[7:0](C5), PC<=PC+1(C6), dispatch(C1)
+00000072,
+; 0x03-0x0F : unused
+00000000, 00000000, 00000000, 00000000, 00000000,
+00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
+; --- STORE X (opcode=01, CAR 0x10-0x1F) ---
+; ACC -> [X]
+; 0x10 STORE T1 : MBR<=ACC (C11), C0
+00000801,
+; 0x11 STORE T2 : DM[MAR]<=MBR (C12), C2->fetch
+00001004,
+; 0x12-0x1F : unused
+00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
+00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
+; --- LOAD X (opcode=02, CAR 0x20-0x2F) ---
+; [X] -> ACC
+; 0x20 LOAD T1 : MBR<=DM[MAR] (C3), C0
+00000009,
+; 0x21 LOAD T2 : BR<=MBR (C7), C0
+00000081,
+; 0x22 LOAD T3 : ACC<=BR (C20), C2->fetch
+00100004,
+; 0x23-0x2F : unused
+00000000, 00000000, 00000000, 00000000, 00000000,
+00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
+; --- ADD X (opcode=03, CAR 0x30-0x37) ---
+; ACC + [X] -> ACC
+; 0x30 ADD T1 : MBR<=DM[MAR] (C3), C0
+00000009,
+; 0x31 ADD T2 : BR<=MBR (C7), C0
+00000081,
+; 0x32 ADD T3 : ACC<=ACC+BR (C9), C2->fetch
+00000204,
+; 0x33-0x37 : unused
+00000000, 00000000, 00000000, 00000000, 00000000,
+; --- SUB X (opcode=04, CAR 0x38-0x3F) ---
+; ACC - [X] -> ACC
+; 0x38 SUB T1 : MBR<=DM[MAR] (C3), C0
+00000009,
+; 0x39 SUB T2 : BR<=MBR (C7), C0
+00000081,
+; 0x3A SUB T3 : ACC<=ACC-BR (C13), C2->fetch
+00002004,
+; 0x3B-0x3F : unused
+00000000, 00000000, 00000000, 00000000, 00000000,
+; --- JMPGEZ X (opcode=05, CAR 0x40-0x47) ---
+; If ACC>=0 then X->PC  else PC+1->PC (PC+1 already done in fetch T3)
+; 0x40 JMPGEZ : if ACC[15]=0 then PC<=MAR (C23), C2->fetch
+00800004,
+; 0x41-0x47 : unused
+00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
+; --- JMP X (opcode=06, CAR 0x48-0x4F) ---
+; X -> PC
+; 0x48 JMP : PC<=MAR (C22), C2->fetch
+00400004,
+; 0x49-0x4F : unused
+00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
+; --- HALT (opcode=07, CAR 0x50-0x57) ---
+; 0x50 HALT : C21 only, CAR freezes (no C0/C1/C2)
+00200000,
+; 0x51-0x57 : unused
+00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
+; --- MPY X (opcode=08, CAR 0x58-0x5F) ---
+; ACC * [X] -> {MR, ACC}
+; 0x58 MPY T1 : MBR<=DM[MAR] (C3), C0
+00000009,
+; 0x59 MPY T2 : BR<=MBR (C7), C0
+00000081,
+; 0x5A MPY T3 : {MR,ACC}<=ACC*BR (C19), C2->fetch
+00080004,
+; 0x5B-0x5F : unused
+00000000, 00000000, 00000000, 00000000, 00000000,
+; --- CAR 0x60-0x67 : unused ---
+00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
+; --- AND X (opcode=0A, CAR 0x68-0x6F) ---
+; ACC AND [X] -> ACC
+; 0x68 AND T1 : MBR<=DM[MAR] (C3), C0
+00000009,
+; 0x69 AND T2 : BR<=MBR (C7), C0
+00000081,
+; 0x6A AND T3 : ACC<=ACC AND BR (C14), C2->fetch
+00004004,
+; 0x6B-0x6F : unused
+00000000, 00000000, 00000000, 00000000, 00000000,
+; --- OR X (opcode=0B, CAR 0x70-0x77) ---
+; ACC OR [X] -> ACC
+; 0x70 OR T1 : MBR<=DM[MAR] (C3), C0
+00000009,
+; 0x71 OR T2 : BR<=MBR (C7), C0
+00000081,
+; 0x72 OR T3 : ACC<=ACC OR BR (C15), C2->fetch
+00008004,
+; 0x73-0x77 : unused
+00000000, 00000000, 00000000, 00000000, 00000000,
+; --- NOT (opcode=0C, CAR 0x78-0x7F) ---
+; NOT ACC -> ACC  (operand address field is ignored)
+; 0x78 NOT : ACC<=NOT ACC (C16), C2->fetch
+00010004,
+; 0x79-0x7F : unused
+00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
+; --- SHIFTR X (opcode=0D, CAR 0x80-0x87) ---
+; [X] >> 1 -> ACC  (logical shift right)
+; 0x80 SHIFTR T1 : MBR<=DM[MAR] (C3), C0
+00000009,
+; 0x81 SHIFTR T2 : BR<=MBR (C7), C0
+00000081,
+; 0x82 SHIFTR T3 : ACC<=BR>>1 (C17), C2->fetch
+00020004,
+; 0x83-0x87 : unused
+00000000, 00000000, 00000000, 00000000, 00000000,
+; --- SHIFTL X (opcode=0E, CAR 0x88-0x8F) ---
+; [X] << 1 -> ACC  (logical shift left)
+; 0x88 SHIFTL T1 : MBR<=DM[MAR] (C3), C0
+00000009,
+; 0x89 SHIFTL T2 : BR<=MBR (C7), C0
+00000081,
+; 0x8A SHIFTL T3 : ACC<=BR<<1 (C18), C2->fetch
+00040004,
+; 0x8B-0x8F : unused
+00000000, 00000000, 00000000, 00000000, 00000000,
+; --- CAR 0x90-0xFF : unused (117 entries) ---
+00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
+00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
+00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
+00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
+00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
+00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
+00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
+00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
+00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
+00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
+00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
+00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
+00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
+00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
+00000000;
