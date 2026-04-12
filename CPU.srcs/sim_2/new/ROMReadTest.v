@@ -2,77 +2,61 @@
 
 module ROMReadTest;
 
-    // ===== ĞÅºÅÉùÃ÷ =====
+    // ===== ä¿¡å·å£°æ˜ =====
     reg         clka;
-    reg         rsta;
     reg  [7:0]  addra;
     wire [31:0] douta;
-    wire        rsta_busy;
 
-    // ===== Àı»¯±»²âÄ£¿é =====
+    // ===== ä¾‹åŒ–è¢«æµ‹æ¨¡å— =====
     ControlMemory CMinstance (
         .clka     (clka),
-        .rsta     (rsta),
         .addra    (addra),
-        .douta    (douta),
-        .rsta_busy(rsta_busy)
+        .douta    (douta)
     );
 
-    // ===== Ê±ÖÓÉú³É 10nsÖÜÆÚ =====
+    // ===== æ—¶é’Ÿç”Ÿæˆ 10nså‘¨æœŸ =====
     initial clka = 0;
     always #5 clka = ~clka;
 
-    // ===== ²âÊÔÂß¼­ =====
+    // ===== æµ‹è¯•é€»è¾‘ =====
     initial begin
-        // ³õÊ¼»¯ĞÅºÅ
-        rsta  = 0;
+        // åˆå§‹åŒ–ä¿¡å·
         addra = 8'd0;
 
-        // ---- ¸´Î» ----
-        $display("=== Reset ===");
-        rsta = 1;
         @(posedge clka); #1;
         @(posedge clka); #1;
-        rsta = 0;
-
-        // µÈ´ı rsta_busy À­µÍ£¨¸´Î»Íê³É£©
-        wait(rsta_busy == 0);
-        $display("Reset done at time %0t", $time);
-
 
         @(posedge clka); #1;
-        addra = 8'd0;
-        @(posedge clka); #1;  // µÈÒ»¸öÖÜÆÚ£¨ÓĞÊä³ö¼Ä´æÆ÷£©
+        addra = 8'h00;
+        @(posedge clka); #1;  // ç­‰ä¸€ä¸ªå‘¨æœŸï¼ˆæœ‰è¾“å‡ºå¯„å­˜å™¨ï¼‰
 
 
-        addra = 8'd2;
+        addra = 8'h00;
         @(posedge clka); #1;
         
-        addra = 8'd3;
+        addra = 8'h02;
         @(posedge clka); #1;
         
-         addra = 8'd5;
+         addra = 8'h10;
         @(posedge clka); #1;
         
-         addra = 8'd6;
+         addra = 8'h11;
         @(posedge clka); #1;
         
-         addra = 8'd8;
+         addra = 8'h20;
         @(posedge clka); #1;
         
         repeat(5) @(posedge clka);
  
-
-       
-
         $display("=== Test Done ===");
-        $finish;
+         $finish;
     end
 
-    // ===== ²¨ĞÎÊä³ö =====
+    // ===== æ³¢å½¢è¾“å‡º =====
     initial begin
         $dumpfile("ROMReadTest.vcd");
         $dumpvars(0, ROMReadTest);
+       
     end
 
 endmodule
