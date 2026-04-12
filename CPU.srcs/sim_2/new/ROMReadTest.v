@@ -20,18 +20,7 @@ module ROMReadTest;
 
     // ===== 测试逻辑 =====
     initial begin
-        // 初始化信号
-        addra = 8'd0;
-
-        @(posedge clka); #1;
-        @(posedge clka); #1;
-
-        @(posedge clka); #1;
-        addra = 8'h00;
-        @(posedge clka); #1;  // 等一个周期（有输出寄存器）
-
-
-        addra = 8'h00;
+        addra = 8'h01;
         @(posedge clka); #1;
         
         addra = 8'h02;
@@ -49,14 +38,13 @@ module ROMReadTest;
         repeat(5) @(posedge clka);
  
         $display("=== Test Done ===");
-         $finish;
+        $finish;
     end
 
     // ===== 波形输出 =====
     initial begin
         $dumpfile("ROMReadTest.vcd");
         $dumpvars(0, ROMReadTest);
-       
     end
 
 endmodule
