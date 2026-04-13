@@ -92,6 +92,19 @@ module CPU_top (
     reg  [15:0] MR;
 
     // -------------------------------------------------------
+    // rsta_busy guard: extend reset until both BRAMs are ready
+    // Xilinx BRAM simulation model pulses rsta_busy HIGH at
+    // power-on regardless of whether rsta is driven.  If this
+    // pulse arrives after system reset is released the CPU would
+    // read douta=0 (output register wiped) and stall.
+    // Driving rsta=reset lets us monitor rsta_busy and hold the
+    // CPU in reset until both CM and IM output registers are stable.
+    // -------------------------------------------------------
+    wire cm_rsta_busy;
+    wire im_rsta_busy;
+    wire internal_reset = reset | cm_rsta_busy | im_rsta_busy;
+
+    // -------------------------------------------------------
     // Control Unit
     // -------------------------------------------------------
     wire [7:0]  car;
@@ -99,7 +112,7 @@ module CPU_top (
 
     ControlUnit cu (
         .clk        (clk),
-        .reset      (reset),
+        .reset      (internal_reset),
         .micro_instr(micro_instr),
         .mbr_high   (MBR[15:8]),   // opcode used for dispatch (C1)
         .car        (car),
@@ -110,9 +123,11 @@ module CPU_top (
     // Control Memory (32-bit x 256 ROM, CMData.coe)
     // -------------------------------------------------------
     ControlMemory cm (
-        .clka (clk),
-        .addra(car),
-        .douta(micro_instr)
+        .clka      (clk),
+        .rsta      (reset),
+        .addra     (car),
+        .douta     (micro_instr),
+        .rsta_busy (cm_rsta_busy)
     );
 
     // -------------------------------------------------------
@@ -121,9 +136,11 @@ module CPU_top (
     wire [15:0] im_dout;
 
     InstructionMemory im (
-        .clka (clk),
-        .addra(MAR),
-        .douta(im_dout)
+        .clka      (clk),
+        .rsta      (reset),
+        .addra     (MAR),
+        .douta     (im_dout),
+        .rsta_busy (im_rsta_busy)
     );
 
     // -------------------------------------------------------
@@ -216,8 +233,8 @@ module CPU_top (
     // -------------------------------------------------------
     // Register update: all registers clocked on posedge
     // -------------------------------------------------------
-    always @(posedge clk or posedge reset) begin
-        if (reset) begin
+    always @(posedge clk or posedge internal_reset) begin
+        if (internal_reset) begin
             MAR <= 8'h00;
             MBR <= 16'h0000;
             PC  <= 8'h00;
