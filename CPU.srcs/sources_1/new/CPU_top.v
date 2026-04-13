@@ -283,4 +283,45 @@ module CPU_top (
         end
     end
 
+    // -------------------------------------------------------
+    // Simulation-only decode strings
+    // -------------------------------------------------------
+    // synthesis translate_off
+    reg [47:0] ir_str;          // 6-char IR opcode mnemonic
+    always @(*) begin
+        case (IR)
+            8'h01: ir_str = "STORE ";
+            8'h02: ir_str = "LOAD  ";
+            8'h03: ir_str = "ADD   ";
+            8'h04: ir_str = "SUB   ";
+            8'h05: ir_str = "JMPGEZ";
+            8'h06: ir_str = "JMP   ";
+            8'h07: ir_str = "HALT  ";
+            8'h08: ir_str = "MPY   ";
+            8'h0A: ir_str = "AND   ";
+            8'h0B: ir_str = "OR    ";
+            8'h0C: ir_str = "NOT   ";
+            8'h0D: ir_str = "SHIFTR";
+            8'h0E: ir_str = "SHIFTL";
+            default: ir_str = "???   ";
+        endcase
+    end
+
+    reg [47:0] alu_op_str;      // 6-char ALU operation name
+    always @(*) begin
+        case (alu_op)
+            ALU_ADD:    alu_op_str = "ADD   ";
+            ALU_SUB:    alu_op_str = "SUB   ";
+            ALU_AND:    alu_op_str = "AND   ";
+            ALU_OR:     alu_op_str = "OR    ";
+            ALU_NOT:    alu_op_str = "NOT   ";
+            ALU_SHR:    alu_op_str = "SHR   ";
+            ALU_SHL:    alu_op_str = "SHL   ";
+            ALU_MPY:    alu_op_str = "MPY   ";
+            ALU_PASS_B: alu_op_str = "PASS_B";
+            default:    alu_op_str = "???   ";
+        endcase
+    end
+    // synthesis translate_on
+
 endmodule

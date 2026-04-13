@@ -93,4 +93,78 @@ module ControlUnit (
         // C21 asserted: CAR freezes (CPU halted)
     end
 
+    // -------------------------------------------------------
+    // Simulation-only decode strings
+    // -------------------------------------------------------
+    // synthesis translate_off
+    reg [127:0] uop_str;        // 16-char micro-operation description
+    always @(*) begin
+        case (car)
+            8'h00: uop_str = "MAR<=PC         ";
+            8'h01: uop_str = "MBR<=IM[MAR]    ";
+            8'h02: uop_str = "IR,MAR,PC,DISP  ";
+            8'h10: uop_str = "MBR<=ACC        ";
+            8'h11: uop_str = "DM[MAR]<=MBR    ";
+            8'h20: uop_str = "MBR<=DM[MAR]    ";
+            8'h21: uop_str = "BR<=MBR         ";
+            8'h22: uop_str = "ACC<=BR         ";
+            8'h30: uop_str = "MBR<=DM[MAR]    ";
+            8'h31: uop_str = "BR<=MBR         ";
+            8'h32: uop_str = "ACC<=ACC+BR     ";
+            8'h38: uop_str = "MBR<=DM[MAR]    ";
+            8'h39: uop_str = "BR<=MBR         ";
+            8'h3A: uop_str = "ACC<=ACC-BR     ";
+            8'h40: uop_str = "JMPGEZ:PC<=MAR  ";
+            8'h48: uop_str = "JMP:PC<=MAR     ";
+            8'h50: uop_str = "HALT            ";
+            8'h58: uop_str = "MBR<=DM[MAR]    ";
+            8'h59: uop_str = "BR<=MBR         ";
+            8'h5A: uop_str = "{MR,ACC}<=MUL   ";
+            8'h68: uop_str = "MBR<=DM[MAR]    ";
+            8'h69: uop_str = "BR<=MBR         ";
+            8'h6A: uop_str = "ACC<=ACC&BR     ";
+            8'h70: uop_str = "MBR<=DM[MAR]    ";
+            8'h71: uop_str = "BR<=MBR         ";
+            8'h72: uop_str = "ACC<=ACC|BR     ";
+            8'h78: uop_str = "ACC<=~ACC       ";
+            8'h80: uop_str = "MBR<=DM[MAR]    ";
+            8'h81: uop_str = "BR<=MBR         ";
+            8'h82: uop_str = "ACC<=BR>>1      ";
+            8'h88: uop_str = "MBR<=DM[MAR]    ";
+            8'h89: uop_str = "BR<=MBR         ";
+            8'h8A: uop_str = "ACC<=BR<<1      ";
+            default: uop_str = "???             ";
+        endcase
+    end
+
+    reg [63:0] next_car_str;    // 8-char next-CAR destination label
+    always @(*) begin
+        if (C21)
+            next_car_str = "FROZEN  ";
+        else if (C2)
+            next_car_str = "->FETCH ";
+        else if (C1)
+            case (mbr_high)
+                8'h01: next_car_str = "->STORE ";
+                8'h02: next_car_str = "->LOAD  ";
+                8'h03: next_car_str = "->ADD   ";
+                8'h04: next_car_str = "->SUB   ";
+                8'h05: next_car_str = "->JMPGEZ";
+                8'h06: next_car_str = "->JMP   ";
+                8'h07: next_car_str = "->HALT  ";
+                8'h08: next_car_str = "->MPY   ";
+                8'h0A: next_car_str = "->AND   ";
+                8'h0B: next_car_str = "->OR    ";
+                8'h0C: next_car_str = "->NOT   ";
+                8'h0D: next_car_str = "->SHIFTR";
+                8'h0E: next_car_str = "->SHIFTL";
+                default: next_car_str = "->???   ";
+            endcase
+        else if (C0)
+            next_car_str = "->CAR+1 ";
+        else
+            next_car_str = "->???   ";
+    end
+    // synthesis translate_on
+
 endmodule
