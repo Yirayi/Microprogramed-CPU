@@ -92,6 +92,19 @@ module CPU_top (
     reg  [15:0] MR;
 
     // -------------------------------------------------------
+    // rsta_busy guard: extend reset until both BRAMs are ready
+    // Xilinx BRAM simulation model pulses rsta_busy HIGH at
+    // power-on regardless of whether rsta is driven.  If this
+    // pulse arrives after system reset is released the CPU would
+    // read douta=0 (output register wiped) and stall.
+    // Driving rsta=reset lets us monitor rsta_busy and hold the
+    // CPU in reset until both CM and IM output registers are stable.
+    // -------------------------------------------------------
+    wire cm_rsta_busy;
+    wire im_rsta_busy;
+    wire internal_reset = reset | cm_rsta_busy | im_rsta_busy;
+
+    // -------------------------------------------------------
     // Control Unit
     // -------------------------------------------------------
     wire [7:0]  car;
@@ -99,7 +112,7 @@ module CPU_top (
 
     ControlUnit cu (
         .clk        (clk),
-        .reset      (reset),
+        .reset      (internal_reset),
         .micro_instr(micro_instr),
         .mbr_high   (MBR[15:8]),   // opcode used for dispatch (C1)
         .car        (car),
@@ -110,9 +123,11 @@ module CPU_top (
     // Control Memory (32-bit x 256 ROM, CMData.coe)
     // -------------------------------------------------------
     ControlMemory cm (
-        .clka (clk),
-        .addra(car),
-        .douta(micro_instr)
+        .clka      (clk),
+        .rsta      (reset),
+        .addra     (car),
+        .douta     (micro_instr),
+        .rsta_busy (cm_rsta_busy)
     );
 
     // -------------------------------------------------------
@@ -121,9 +136,11 @@ module CPU_top (
     wire [15:0] im_dout;
 
     InstructionMemory im (
-        .clka (clk),
-        .addra(MAR),
-        .douta(im_dout)
+        .clka      (clk),
+        .rsta      (reset),
+        .addra     (MAR),
+        .douta     (im_dout),
+        .rsta_busy (im_rsta_busy)
     );
 
     // -------------------------------------------------------
@@ -216,8 +233,8 @@ module CPU_top (
     // -------------------------------------------------------
     // Register update: all registers clocked on posedge
     // -------------------------------------------------------
-    always @(posedge clk or posedge reset) begin
-        if (reset) begin
+    always @(posedge clk or posedge internal_reset) begin
+        if (internal_reset) begin
             MAR <= 8'h00;
             MBR <= 16'h0000;
             PC  <= 8'h00;
@@ -265,5 +282,56 @@ module CPU_top (
 
         end
     end
+
+    // -------------------------------------------------------
+    // Simulation-only decode strings
+    // -------------------------------------------------------
+    // synthesis translate_off
+    reg [47:0] ir_str;          // 6-char IR opcode mnemonic
+    always @(*) begin
+        if (internal_reset) begin
+            ir_str ="RESET ";
+        end else
+        begin
+            case (IR)
+                8'h01: ir_str = "STORE ";
+                8'h02: ir_str = "LOAD  ";
+                8'h03: ir_str = "ADD   ";
+                8'h04: ir_str = "SUB   ";
+                8'h05: ir_str = "JMPGEZ";
+                8'h06: ir_str = "JMP   ";
+                8'h07: ir_str = "HALT  ";
+                8'h08: ir_str = "MPY   ";
+                8'h0A: ir_str = "AND   ";
+                8'h0B: ir_str = "OR    ";
+                8'h0C: ir_str = "NOT   ";
+                8'h0D: ir_str = "SHIFTR";
+                8'h0E: ir_str = "SHIFTL";
+                default: ir_str = "???   ";
+            endcase
+         end
+    end
+
+    reg [47:0] alu_op_str;      // 6-char ALU operation name
+    always @(*) begin
+       if (internal_reset) begin
+            alu_op_str ="RESET ";
+        end else
+        begin
+            case (alu_op)
+                ALU_ADD:    alu_op_str = "ADD   ";
+                ALU_SUB:    alu_op_str = "SUB   ";
+                ALU_AND:    alu_op_str = "AND   ";
+                ALU_OR:     alu_op_str = "OR    ";
+                ALU_NOT:    alu_op_str = "NOT   ";
+                ALU_SHR:    alu_op_str = "SHR   ";
+                ALU_SHL:    alu_op_str = "SHL   ";
+                ALU_MPY:    alu_op_str = "MPY   ";
+                ALU_PASS_B: alu_op_str = "PASS_B";
+                default:    alu_op_str = "???   ";
+            endcase
+         end
+    end
+    // synthesis translate_on
 
 endmodule
