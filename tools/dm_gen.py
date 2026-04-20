@@ -14,6 +14,9 @@ Usage:
 
     Default output filename: DMData.coe
 """
+"""
+python tools/im_asm.py tools/test_program.asm IMData.coe
+"""
 
 import sys
 import re

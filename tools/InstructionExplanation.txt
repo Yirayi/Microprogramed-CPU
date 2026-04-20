@@ -1,0 +1,17 @@
+; ============================================================
+; Instruction format (16-bit): [15:8]=opcode  [7:0]=operand/address X
+;
+; Opcode table:
+;   01 = STORE X   ACC -> DM[X]
+;   02 = LOAD X    DM[X] -> ACC
+;   03 = ADD X     ACC + DM[X] -> ACC
+;   04 = SUB X     ACC - DM[X] -> ACC
+;   05 = JMPGEZ X  if ACC>=0 then X->PC  else PC+1->PC
+;   06 = JMP X     X -> PC
+;   07 = HALT
+;   08 = MPY X     ACC * DM[X] -> {MR, ACC}
+;   0A = AND X     ACC AND DM[X] -> ACC
+;   0B = OR X      ACC OR DM[X] -> ACC
+;   0C = NOT       NOT ACC -> ACC  (X field ignored)
+;   0D = SHIFTR X  DM[X] >> 1 -> ACC
+;   0E = SHIFTL X  DM[X] << 1 -> ACC
