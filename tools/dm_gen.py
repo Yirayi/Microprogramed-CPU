@@ -15,6 +15,7 @@ Usage:
     Default output filename: DMData.coe
 """
 """
+python tools/dm_gen.py tools/test_data.dm DMData.coe
 python tools/im_asm.py tools/test_program.asm IMData.coe
 """
 
