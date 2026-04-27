@@ -1,0 +1,93 @@
+; ============================================================
+; Instruction Memory Initialization File (IMData.coe)
+; ============================================================
+; Instruction format (16-bit): [15:8]=opcode  [7:0]=operand/address X
+;
+; Opcode table:
+;   01 = STORE X   ACC -> DM[X]
+;   02 = LOAD X    DM[X] -> ACC
+;   03 = ADD X     ACC + DM[X] -> ACC
+;   04 = SUB X     ACC - DM[X] -> ACC
+;   05 = JMPGEZ X  if ACC>=0 then X->PC  else PC+1->PC
+;   06 = JMP X     X -> PC
+;   07 = HALT
+;   08 = MPY X     ACC * DM[X] -> {MR, ACC}
+;   0A = AND X     ACC AND DM[X] -> ACC
+;   0B = OR X      ACC OR DM[X] -> ACC
+;   0C = NOT       NOT ACC -> ACC  (X field ignored)
+;   0D = SHIFTR X  DM[X] >> 1 -> ACC
+;   0E = SHIFTL X  DM[X] << 1 -> ACC
+;
+; Test program assumes:
+;   DM[0xF0] = 0x0005  (value 5)
+;   DM[0xF1] = 0x0003  (value 3)
+;   DM[0xF2] = 0x0000  (scratch storage)
+;
+; Execution trace:
+;   PC=0x00  LOAD  0xF0         ACC = 5
+;   PC=0x01  ADD   0xF1         ACC = 5+3 = 8
+;   PC=0x02  STORE 0xF2         DM[0xF2] = 8
+;   PC=0x03  SUB   0xF0         ACC = 8-5 = 3
+;   PC=0x04  AND   0xF0         ACC = 3 & 5 = 0x0001
+;   PC=0x05  OR    0xF1         ACC = 0x0001 | 3 = 0x0003
+;   PC=0x06  NOT   0xF0         ACC = ~0x0003 = 0xFFFC
+;   PC=0x07  SHIFTR 0xF0        ACC = DM[0xF0]>>1 = 5>>1 = 2
+;   PC=0x08  SHIFTL 0xF0        ACC = DM[0xF0]<<1 = 5<<1 = 10 (0x000A)
+;   PC=0x09  MPY   0xF1         ACC = 10*3 = 30 (0x001E), MR=0
+;   PC=0x0A  JMPGEZ 0x0C        ACC=30>=0 -> jump to 0x0C
+;   PC=0x0B  HALT               (skipped because JMPGEZ taken)
+;   PC=0x0C  JMP   0x0E         unconditional jump to 0x0E
+;   PC=0x0D  HALT               (dead code, skipped)
+;   PC=0x0E  HALT               program ends
+; ============================================================
+
+memory_initialization_radix=16;
+memory_initialization_vector=
+; PC=0x00  LOAD  0xF0  : ACC = DM[0xF0]
+02F0,
+; PC=0x01  ADD   0xF1  : ACC = ACC + DM[0xF1]
+03F1,
+; PC=0x02  STORE 0xF2  : DM[0xF2] = ACC
+01F2,
+; PC=0x03  SUB   0xF0  : ACC = ACC - DM[0xF0]
+04F0,
+; PC=0x04  AND   0xF0  : ACC = ACC AND DM[0xF0]
+0AF0,
+; PC=0x05  OR    0xF1  : ACC = ACC OR DM[0xF1]
+0BF1,
+; PC=0x06  NOT         : ACC = NOT ACC
+0CF0,
+; PC=0x07  SHIFTR 0xF0 : ACC = DM[0xF0] >> 1
+0DF0,
+; PC=0x08  SHIFTL 0xF0 : ACC = DM[0xF0] << 1
+0EF0,
+; PC=0x09  MPY   0xF1  : {MR,ACC} = ACC * DM[0xF1]
+08F1,
+; PC=0x0A  JMPGEZ 0x0C : if ACC>=0 jump to 0x0C
+050C,
+; PC=0x0B  HALT        : reached only if ACC<0 (not taken here)
+0700,
+; PC=0x0C  JMP   0x0E  : unconditional jump to 0x0E
+060E,
+; PC=0x0D  HALT        : dead code (skipped by JMP)
+0700,
+; PC=0x0E  HALT        : normal program end
+0700,
+; PC=0x0F-0xFF : NOP/padding (unused)
+0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000,
+0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000,
+0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000,
+0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000,
+0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000,
+0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000,
+0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000,
+0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000,
+0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000,
+0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000,
+0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000,
+0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000,
+0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000,
+0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000,
+0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000,
+0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000,
+0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000;
