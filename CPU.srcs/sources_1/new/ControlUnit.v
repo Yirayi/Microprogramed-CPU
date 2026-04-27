@@ -97,13 +97,22 @@ module ControlUnit (
     // Simulation-only decode strings
     // -------------------------------------------------------
     // synthesis translate_off
+
+    // CM BRAM has 1-cycle registered output: micro_instr lags car by one clock.
+    // car_d mirrors that delay so case(car_d) is always in phase with micro_instr.
+    reg [7:0] car_d;
+    always @(posedge clk or posedge reset) begin
+        if (reset) car_d <= 8'h00;
+        else       car_d <= car;
+    end
+
     reg [127:0] uop_str;        // 16-char micro-operation description
     reg [63:0]  uop_name_str;   // 8-char micro-step name (fetch1, store2, …)
     always @(*) begin
-        if (reset) begin uop_str = "RESET           "; uop_name_str = "reset  "; end
+        if (reset) begin uop_str = "RESET           "; uop_name_str = "reset   "; end
         else
         begin
-            case (car)
+            case (car_d)
                 8'h00: begin uop_str = "MAR<=PC         "; uop_name_str = "fetch1  "; end
                 8'h01: begin uop_str = "MBR<=IM[MAR]    "; uop_name_str = "fetch2  "; end
                 8'h02: begin uop_str = "IR,MAR,PC,DISP  "; uop_name_str = "fetch3  "; end
