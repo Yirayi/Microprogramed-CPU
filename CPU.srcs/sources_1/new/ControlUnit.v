@@ -98,12 +98,15 @@ module ControlUnit (
     // -------------------------------------------------------
     // synthesis translate_off
 
-    // CM BRAM has 1-cycle registered output: micro_instr lags car by one clock.
-    // car_d mirrors that delay so case(car_d) is always in phase with micro_instr.
-    reg [7:0] car_d;
+    // micro_instr lags car by 2 clocks:
+    //   cycle 0: car updates (register output)
+    //   cycle 1: BRAM samples the address
+    //   cycle 2: BRAM registered output valid → micro_instr
+    // car_d2 replicates that 2-cycle delay so case(car_d2) is in phase with micro_instr.
+    reg [7:0] car_d1, car_d2;
     always @(posedge clk or posedge reset) begin
-        if (reset) car_d <= 8'h00;
-        else       car_d <= car;
+        if (reset) begin car_d1 <= 8'h00; car_d2 <= 8'h00; end
+        else       begin car_d1 <= car;   car_d2 <= car_d1; end
     end
 
     reg [127:0] uop_str;        // 16-char micro-operation description
@@ -112,7 +115,7 @@ module ControlUnit (
         if (reset) begin uop_str = "RESET           "; uop_name_str = "reset   "; end
         else
         begin
-            case (car_d)
+            case (car_d2)
                 8'h00: begin uop_str = "MAR<=PC         "; uop_name_str = "fetch1  "; end
                 8'h01: begin uop_str = "MBR<=IM[MAR]    "; uop_name_str = "fetch2  "; end
                 8'h02: begin uop_str = "IR,MAR,PC,DISP  "; uop_name_str = "fetch3  "; end
