@@ -118,12 +118,11 @@ module SumProgram_tb;
         // -------------------------------------------------------
         // Run until HALT or timeout
         // Cycle budget: ~22 init + 101*38 loop + 4 halt = ~3864
-        // Timeout set to 20000 to absorb rsta_busy overhead
         // -------------------------------------------------------
         cycle = 0;
         fork
             begin : wait_halt
-                while (!halted && cycle < 20000) begin
+                while (!halted && cycle < 10000) begin
                     @(posedge clk); #1;
                     cycle = cycle + 1;
                 end
@@ -131,44 +130,43 @@ module SumProgram_tb;
         join
 
         if (!halted) begin
-            $display("[FAIL] CPU did not HALT within 20000 cycles! (stopped at PC=0x%02h)", tb_PC);
+            $display("[FAIL] CPU did not HALT within 5000 cycles! (stopped at PC=0x%02h)", tb_PC);
             errors = errors + 1;
-            $display("  Simulation terminated early – skipping register checks.");
         end else begin
             $display("[%0t] HALT asserted after %0d post-reset cycles.", $time, cycle);
-
-            // Allow pipeline to fully drain
-            repeat (3) @(posedge clk); #1;
-
-            // -------------------------------------------------------
-            // Final register state display
-            // -------------------------------------------------------
-            $display("");
-            $display("--- Final Register State ---");
-            $display("  CAR = 0x%02h  (expect 0x50 – HALT microcode address)", tb_CAR);
-            $display("  PC  = 0x%02h  (expect 0x0C – HALT was at 0x0B, PC+1)", tb_PC);
-            $display("  IR  = 0x%02h  (expect 0x07 – HALT opcode)", tb_IR);
-            $display("  MAR = 0x%02h", tb_MAR);
-            $display("  MBR = 0x%04h", tb_MBR);
-            $display("  BR  = 0x%04h", tb_BR);
-            $display("  ACC = 0x%04h  (expect 0xFFFF – last temp-1 = 0-1 = -1)", tb_ACC);
-            $display("  MR  = 0x%04h  (expect 0x0000 – no MPY instruction)", tb_MR);
-            $display("  DM read-port (MAR=0x%02h): 0x%04h  (check 0xA4 in waveform)", tb_MAR, tb_dm_dout);
-            $display("");
-            $display("  Note: DM[0xA4] = sum = 5050 = 0x13BA");
-            $display("        Inspect tb_dm_dout when MAR=0xA4 in the waveform.");
-            $display("");
-
-            // -------------------------------------------------------
-            // Assertions
-            // -------------------------------------------------------
-            check_flag("halted",   halted,  1'b1);
-            check_8   ("CAR",      tb_CAR,  8'h50);
-            check_8   ("PC",       tb_PC,   8'h0C);
-            check_8   ("IR",       tb_IR,   8'h07);
-            check_16  ("ACC",      tb_ACC,  16'hFFFF);
-            check_16  ("MR",       tb_MR,   16'h0000);
         end
+
+        // Allow pipeline to fully drain
+        repeat (3) @(posedge clk); #1;
+
+        // -------------------------------------------------------
+        // Final register state display
+        // -------------------------------------------------------
+        $display("");
+        $display("--- Final Register State ---");
+        $display("  CAR = 0x%02h  (expect 0x50 – HALT microcode address)", tb_CAR);
+        $display("  PC  = 0x%02h  (expect 0x0C – HALT was at 0x0B, PC+1)", tb_PC);
+        $display("  IR  = 0x%02h  (expect 0x07 – HALT opcode)", tb_IR);
+        $display("  MAR = 0x%02h", tb_MAR);
+        $display("  MBR = 0x%04h", tb_MBR);
+        $display("  BR  = 0x%04h", tb_BR);
+        $display("  ACC = 0x%04h  (expect 0xFFFF – last temp-1 = 0-1 = -1)", tb_ACC);
+        $display("  MR  = 0x%04h  (expect 0x0000 – no MPY instruction)", tb_MR);
+        $display("  DM read-port (MAR=0x%02h): 0x%04h  (check 0xA4 in waveform)", tb_MAR, tb_dm_dout);
+        $display("");
+        $display("  Note: DM[0xA4] = sum = 5050 = 0x13BA");
+        $display("        Inspect tb_dm_dout when MAR=0xA4 in the waveform.");
+        $display("");
+
+        // -------------------------------------------------------
+        // Assertions
+        // -------------------------------------------------------
+        check_flag("halted",   halted,  1'b1);
+        check_8   ("CAR",      tb_CAR,  8'h50);
+        check_8   ("PC",       tb_PC,   8'h0C);
+        check_8   ("IR",       tb_IR,   8'h07);
+        check_16  ("ACC",      tb_ACC,  16'hFFFF);
+        check_16  ("MR",       tb_MR,   16'h0000);
 
         // -------------------------------------------------------
         // Summary
