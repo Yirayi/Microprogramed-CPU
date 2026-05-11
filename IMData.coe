@@ -3,32 +3,58 @@
 ;
 memory_initialization_radix=16;
 memory_initialization_vector=
-; PC=0x00: PC=00  02A0  ACC = 0
-02A0,
-; PC=0x01: PC=01  01A4  DM[A4] (sum) = 0
-01A4,
-; PC=0x02: PC=02  02A2  ACC = 100
-02A2,
-; PC=0x03: PC=03  01A3  DM[A3] (temp) = 100
-01A3,
-; [loop]
-; PC=0x04: PC=04  02A4  ACC = sum
-02A4,
-; PC=0x05: PC=05  03A3  ACC = sum + temp
-03A3,
-; PC=0x06: PC=06  01A4  DM[A4] (sum) = sum + temp
-01A4,
-; PC=0x07: PC=07  02A3  ACC = temp
-02A3,
-; PC=0x08: PC=08  04A1  ACC = temp - 1
-04A1,
-; PC=0x09: PC=09  01A3  DM[A3] (temp) = temp - 1
-01A3,
-; PC=0x0A: PC=0A  0504  ACC[15]=0 → jump to PC=0x04
-0504,
-; PC=0x0B: PC=0B  0700  sum = 5050 = 0x13BA in DM[A4]
+; PC=0x00: PC=00  02E0  ACC = 10
+02E0,
+; PC=0x01: PC=01  01D0  DM[D0] = 10
+01D0,
+; PC=0x02: PC=02  02E0  ACC = 10
+02E0,
+; PC=0x03: PC=03  03E1  ACC = 13
+03E1,
+; PC=0x04: PC=04  02E0  ACC = 10
+02E0,
+; PC=0x05: PC=05  04E1  ACC = 7
+04E1,
+; PC=0x06: PC=06  02E0  ACC = 10 = 0b1010
+02E0,
+; PC=0x07: PC=07  0AE1  ACC =  2 = 0b0010
+0AE1,
+; PC=0x08: PC=08  02E0  ACC = 10 = 0b1010
+02E0,
+; PC=0x09: PC=09  0BE1  ACC = 11 = 0b1011
+0BE1,
+; PC=0x0A: PC=0A  02E0  ACC = 10 = 0x000A
+02E0,
+; PC=0x0B: PC=0B  0C00  ACC = 0xFFF5 = ~0x000A
+0C00,
+; PC=0x0C: PC=0C  0DE0  ACC = DM[E0]>>1 = 5
+0DE0,
+; PC=0x0D: PC=0D  0EE1  ACC = DM[E1]<<1 = 6
+0EE1,
+; PC=0x0E: PC=0E  02E0  ACC = 10
+02E0,
+; PC=0x0F: PC=0F  08E1  {MR,ACC} = 10*3 = 30; ACC=0x001E MR=0
+08E1,
+; PC=0x10: PC=10  0612
+0612,
+; PC=0x11: PC=11  0700  dead – skipped if JMP works
 0700,
-; 0x0C-0xFF: unused
+; [jmpok]
+; PC=0x12: PC=12  0514
+0514,
+; PC=0x13: PC=13  0700  dead – skipped if JMPGEZ-taken works
+0700,
+; [gezok]
+; PC=0x14: PC=14  02E2  ACC = 0xFFFF
+02E2,
+; PC=0x15: PC=15  0517  NOT taken (ACC[15]=1) → fall through
+0517,
+; PC=0x16: PC=16  02E0  ACC = 10  ← proves not-taken path ran
+02E0,
+; [done]
+; PC=0x17: PC=17  0700  ACC=0x000A if correct, 0xFFFF if JMPGEZ wrongly taken
+0700,
+; 0x18-0xFF: unused
 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000,
 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000,
 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000,
@@ -57,6 +83,4 @@ memory_initialization_vector=
 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000,
 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000,
 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000,
-0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000,
-0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000,
-0000, 0000, 0000, 0000;
+0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000;
