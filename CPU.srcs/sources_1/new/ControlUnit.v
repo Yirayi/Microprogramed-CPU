@@ -24,11 +24,14 @@
 //   JMP    06 -> 0x48
 //   HALT   07 -> 0x50
 //   MPY    08 -> 0x58
+//   LOADI  09 -> 0x90
 //   AND    0A -> 0x68
 //   OR     0B -> 0x70
 //   NOT    0C -> 0x78
 //   SHIFTR 0D -> 0x80
 //   SHIFTL 0E -> 0x88
+//   OUT    0F -> 0xA0
+//   IN     10 -> 0xA8
 //
 // Note: C1 reads mbr_high (MBR[15:8]) combinationally.
 //   Both C4 (IR <= MBR[15:8]) and C1 fire in the same clock
@@ -72,6 +75,9 @@ module ControlUnit (
             8'h0C:   dispatch = 8'h78;   // NOT
             8'h0D:   dispatch = 8'h80;   // SHIFTR X
             8'h0E:   dispatch = 8'h88;   // SHIFTL X
+            8'h09:   dispatch = 8'h90;   // LOADI imm8
+            8'h0F:   dispatch = 8'hA0;   // OUT [port]
+            8'h10:   dispatch = 8'hA8;   // IN [port]
             default: dispatch = 8'h00;   // unknown -> restart fetch
         endcase
     endfunction
@@ -84,39 +90,27 @@ module ControlUnit (
             // Priority: C2 > C1 > C0
             if (C2)         // CAR <= 0
                 car <= 8'h00;
-            else if (C1)// CAR <= dispatch(mbr_high)
+            else if (C1)    // CAR <= dispatch(mbr_high)
                 car <= dispatch(mbr_high);
-            else if (C0)// CAR <= CAR+1
+            else if (C0)    // CAR <= CAR+1
                 car <= car + 8'h01;
             // else: no sequencing bits -> stay (should not happen except HALT)
         end
         // C21 asserted: CAR freezes (CPU halted)
     end
-    
+
     always @(negedge reset) begin
         car <= 8'h00;
     end
- 
+
 
     // -------------------------------------------------------
     // Simulation-only decode strings
     // -------------------------------------------------------
     // synthesis translate_off
 
-    // micro_instr lags car by 2 clocks:
-    //   cycle 0: car updates (register output)
-    //   cycle 1: BRAM samples the address
-    //   cycle 2: BRAM registered output valid → micro_instr
-    // car_d2 replicates that 2-cycle delay so case(car_d2) is in phase with micro_instr.
-    
-//    reg [7:0] car_d1, car_d2;
-//    always @(posedge clk or posedge reset) begin
-//        if (reset) begin car_d1 <= 8'hFF; car_d2 <= 8'hFF; end
-//        else       begin car_d1 <= car;   car_d2 <= car_d1; end
-//    end
-
-    reg [127:0] cu_command;        // 16-char micro-operation description
-    reg [63:0]  cu_phase;   // 8-char micro-step name (fetch1, store2, …)
+    reg [127:0] cu_command;   // 16-char micro-operation description
+    reg [63:0]  cu_phase;     // 8-char micro-step name (fetch1, store2, …)
     always @(posedge clk) begin
         if (reset) begin cu_command = "RESET           "; cu_phase = "reset   "; end
         else
@@ -155,6 +149,11 @@ module ControlUnit (
                 8'h88: begin cu_command = "MBR<=DM[MAR]    "; cu_phase = "shiftl1 "; end
                 8'h89: begin cu_command = "BR<=MBR         "; cu_phase = "shiftl2 "; end
                 8'h8A: begin cu_command = "ACC<=BR<<1      "; cu_phase = "shiftl3 "; end
+                8'h90: begin cu_command = "ACC<=sext(MAR)  "; cu_phase = "loadi1  "; end
+                8'hA0: begin cu_command = "port[MAR]<=ACC  "; cu_phase = "out1    "; end
+                8'hA8: begin cu_command = "MBR<=port[MAR]  "; cu_phase = "in1     "; end
+                8'hA9: begin cu_command = "BR<=MBR         "; cu_phase = "in2     "; end
+                8'hAA: begin cu_command = "ACC<=BR         "; cu_phase = "in3     "; end
                 default: begin cu_command = "???             "; cu_phase = "???     "; end
             endcase
          end
@@ -181,6 +180,9 @@ module ControlUnit (
                 8'h0C: next_car_str = "->NOT   ";
                 8'h0D: next_car_str = "->SHIFTR";
                 8'h0E: next_car_str = "->SHIFTL";
+                8'h09: next_car_str = "->LOADI ";
+                8'h0F: next_car_str = "->OUT   ";
+                8'h10: next_car_str = "->IN    ";
                 default: next_car_str = "->???   ";
             endcase
         else if (C0)

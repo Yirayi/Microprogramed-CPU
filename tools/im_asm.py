@@ -44,6 +44,9 @@ OPCODES = {
     'JMP':    0x06,
     'HALT':   0x07,
     'MPY':    0x08,
+    'LOADI':  0x09,
+    'OUT':    0x0F,
+    'IN':     0x10,
     'AND':    0x0A,
     'OR':     0x0B,
     'NOT':    0x0C,
@@ -51,6 +54,7 @@ OPCODES = {
     'SHIFTL': 0x0E,
 }
 NO_OPERAND = {'HALT', 'NOT'}
+IMMEDIATE_OPERAND = {'LOADI'}  # bare integer operand, no [brackets]
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -124,10 +128,13 @@ def parse_source(path: str):
         operand_s = None
         if len(parts) > 1:
             rest = parts[1].strip()
-            m = re.fullmatch(r'\[([^\]]+)\]', rest)
-            if not m:
-                sys.exit(f'[ERROR] {path}:{lineno}: operand must be in [brackets], got "{rest}"')
-            operand_s = m.group(1).strip()
+            if mnemonic in IMMEDIATE_OPERAND:
+                operand_s = rest          # bare integer, no brackets required
+            else:
+                m = re.fullmatch(r'\[([^\]]+)\]', rest)
+                if not m:
+                    sys.exit(f'[ERROR] {path}:{lineno}: operand must be in [brackets], got "{rest}"')
+                operand_s = m.group(1).strip()
 
         if mnemonic not in NO_OPERAND and operand_s is None:
             sys.exit(f'[ERROR] {path}:{lineno}: {mnemonic} requires an operand [addr]')
@@ -188,8 +195,13 @@ def assemble(path: str):
                 except ValueError:
                     sys.exit(f'[ERROR] {path}:{lineno}: bad operand "{operand_s}"')
 
-        if not 0 <= operand <= 255:
-            sys.exit(f'[ERROR] {path}:{lineno}: operand {operand:#04x} out of 0-0xFF range')
+        if mnemonic in IMMEDIATE_OPERAND:
+            if not (-128 <= operand <= 255):
+                sys.exit(f'[ERROR] {path}:{lineno}: immediate {operand} out of -128..255 range')
+            operand = operand & 0xFF   # encode as unsigned 8-bit (e.g. -1 -> 0xFF)
+        else:
+            if not 0 <= operand <= 255:
+                sys.exit(f'[ERROR] {path}:{lineno}: operand {operand:#04x} out of 0-0xFF range')
 
         instrs.append((opcode << 8) | operand)
         comments.append(comment)

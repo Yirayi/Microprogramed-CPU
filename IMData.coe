@@ -19,13 +19,13 @@ memory_initialization_vector=
 02E0,
 ; PC=0x07: PC=07  0AE1  ACC =  2 = 0b0010
 0AE1,
-; PC=0x08: PC=08  02E0  ACC = 10 = 0b1010
+; PC=0x08: PC=08  02E0  ACC = 10
 02E0,
-; PC=0x09: PC=09  0BE1  ACC = 11 = 0b1011
+; PC=0x09: PC=09  0BE1  ACC = 11
 0BE1,
-; PC=0x0A: PC=0A  02E0  ACC = 10 = 0x000A
+; PC=0x0A: PC=0A  02E0  ACC = 10
 02E0,
-; PC=0x0B: PC=0B  0C00  ACC = 0xFFF5 = ~0x000A
+; PC=0x0B: PC=0B  0C00  ACC = 0xFFF5
 0C00,
 ; PC=0x0C: PC=0C  0DE0  ACC = DM[E0]>>1 = 5
 0DE0,
@@ -33,28 +33,38 @@ memory_initialization_vector=
 0EE1,
 ; PC=0x0E: PC=0E  02E0  ACC = 10
 02E0,
-; PC=0x0F: PC=0F  08E1  {MR,ACC} = 10*3 = 30; ACC=0x001E MR=0
+; PC=0x0F: PC=0F  08E1  {MR,ACC}=30; ACC=0x001E MR=0
 08E1,
 ; PC=0x10: PC=10  0612
 0612,
-; PC=0x11: PC=11  0700  dead – skipped if JMP works
+; PC=0x11: PC=11  0700  dead
 0700,
 ; [jmpok]
 ; PC=0x12: PC=12  0514
 0514,
-; PC=0x13: PC=13  0700  dead – skipped if JMPGEZ-taken works
+; PC=0x13: PC=13  0700  dead
 0700,
 ; [gezok]
 ; PC=0x14: PC=14  02E2  ACC = 0xFFFF
 02E2,
-; PC=0x15: PC=15  0517  NOT taken (ACC[15]=1) → fall through
-0517,
-; PC=0x16: PC=16  02E0  ACC = 10  ← proves not-taken path ran
+; PC=0x15: PC=15  051C  NOT taken → fall through
+051C,
+; PC=0x16: PC=16  02E0  ACC = 10
 02E0,
+; PC=0x17: PC=17  092A  ACC = 0x002A = 42
+092A,
+; PC=0x18: PC=18  0F00  port_out[0] = 0x002A
+0F00,
+; PC=0x19: PC=19  09FF  ACC = 0xFFFF (sext 0xFF)
+09FF,
+; PC=0x1A: PC=1A  0F01  port_out[1] = 0xFFFF
+0F01,
+; PC=0x1B: PC=1B  1000  ACC = port_in[0]
+1000,
 ; [done]
-; PC=0x17: PC=17  0700  ACC=0x000A if correct, 0xFFFF if JMPGEZ wrongly taken
+; PC=0x1C: PC=1C  0700
 0700,
-; 0x18-0xFF: unused
+; 0x1D-0xFF: unused
 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000,
 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000,
 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000,
@@ -83,4 +93,4 @@ memory_initialization_vector=
 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000,
 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000,
 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000,
-0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000;
+0000, 0000, 0000;
