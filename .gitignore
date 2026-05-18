@@ -8,3 +8,5 @@
 *.jou
 *.bit
 *.bak
+__pycache__/
+*.pyc
