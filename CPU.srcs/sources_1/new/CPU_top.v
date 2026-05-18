@@ -79,7 +79,7 @@ module CPU_top (
     input  wire reset,
     output wire halted    // asserted when HALT instruction executes
 );
-
+    wire clks=~clk;
     // -------------------------------------------------------
     // Internal registers
     // -------------------------------------------------------
@@ -136,7 +136,7 @@ module CPU_top (
     wire [15:0] im_dout;
 
     InstructionMemory im (
-        .clka      (clk),
+        .clka      (clks),
         .rsta      (reset),
         .addra     (MAR),
         .douta     (im_dout),
@@ -154,12 +154,12 @@ module CPU_top (
 
     DataMemory dm (
         // Write port A
-        .clka (clk),
+        .clka (clks),
         .addra(MAR),
         .dina (MBR),
         .wea  (dm_we),
         // Read port B
-        .clkb (clk),
+        .clkb (clks),
         .addrb(MAR),
         .doutb(dm_dout)
     );

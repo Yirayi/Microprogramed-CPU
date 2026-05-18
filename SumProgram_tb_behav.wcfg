@@ -11,13 +11,13 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="90.000 ns"></ZoomStartTime>
-      <ZoomEndTime time="179.558 ns"></ZoomEndTime>
-      <Cursor1Time time="118.427 ns"></Cursor1Time>
+      <ZoomStartTime time="962.596 ns"></ZoomStartTime>
+      <ZoomEndTime time="1,189.863 ns"></ZoomEndTime>
+      <Cursor1Time time="1,019.821 ns"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="490"></NameColumnWidth>
-      <ValueColumnWidth column_width="209"></ValueColumnWidth>
+      <ValueColumnWidth column_width="191"></ValueColumnWidth>
    </column_width_setting>
    <WVObjectSize size="5" />
    <wvobject fp_name="group63" type="group">
@@ -36,20 +36,26 @@
          <obj_property name="ElementShortName">ir_str[47:0]</obj_property>
          <obj_property name="ObjectShortName">ir_str[47:0]</obj_property>
          <obj_property name="Radix">ASCIIRADIX</obj_property>
+         <obj_property name="CustomSignalColor">#FF0000</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
       </wvobject>
-      <wvobject fp_name="/SumProgram_tb/dut/cu/uop_str" type="array">
-         <obj_property name="ElementShortName">uop_str[127:0]</obj_property>
-         <obj_property name="ObjectShortName">uop_str[127:0]</obj_property>
+      <wvobject fp_name="/SumProgram_tb/dut/cu/cu_command" type="array">
+         <obj_property name="ElementShortName">cu_command[127:0]</obj_property>
+         <obj_property name="ObjectShortName">cu_command[127:0]</obj_property>
          <obj_property name="Radix">ASCIIRADIX</obj_property>
       </wvobject>
-      <wvobject fp_name="/SumProgram_tb/dut/cu/uop_name_str" type="array">
-         <obj_property name="ElementShortName">uop_name_str[63:0]</obj_property>
-         <obj_property name="ObjectShortName">uop_name_str[63:0]</obj_property>
+      <wvobject fp_name="/SumProgram_tb/dut/cu/cu_phase" type="array">
+         <obj_property name="ElementShortName">cu_phase[63:0]</obj_property>
+         <obj_property name="ObjectShortName">cu_phase[63:0]</obj_property>
          <obj_property name="Radix">ASCIIRADIX</obj_property>
       </wvobject>
       <wvobject fp_name="/SumProgram_tb/dut/PC" type="array">
          <obj_property name="ElementShortName">PC[7:0]</obj_property>
          <obj_property name="ObjectShortName">PC[7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/SumProgram_tb/dut/car" type="array">
+         <obj_property name="ElementShortName">car[7:0]</obj_property>
+         <obj_property name="ObjectShortName">car[7:0]</obj_property>
       </wvobject>
    </wvobject>
    <wvobject fp_name="/SumProgram_tb/dut/MBR" type="array">

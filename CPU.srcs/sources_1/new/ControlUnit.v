@@ -77,21 +77,26 @@ module ControlUnit (
     endfunction
 
     // ---- CAR update logic ----
-    always @(posedge clk or posedge reset) begin
+    always @(negedge clk or posedge reset) begin
         if (reset) begin
-            car <= 8'h00;
+            car <= 8'hFF;
         end else if (!C21) begin
             // Priority: C2 > C1 > C0
-            if (C2)
+            if (C2)         // CAR <= 0
                 car <= 8'h00;
-            else if (C1)
+            else if (C1)// CAR <= dispatch(mbr_high)
                 car <= dispatch(mbr_high);
-            else if (C0)
+            else if (C0)// CAR <= CAR+1
                 car <= car + 8'h01;
             // else: no sequencing bits -> stay (should not happen except HALT)
         end
         // C21 asserted: CAR freezes (CPU halted)
     end
+    
+    always @(negedge reset) begin
+        car <= 8'h00;
+    end
+ 
 
     // -------------------------------------------------------
     // Simulation-only decode strings
@@ -103,53 +108,54 @@ module ControlUnit (
     //   cycle 1: BRAM samples the address
     //   cycle 2: BRAM registered output valid → micro_instr
     // car_d2 replicates that 2-cycle delay so case(car_d2) is in phase with micro_instr.
-    reg [7:0] car_d1, car_d2;
-    always @(posedge clk or posedge reset) begin
-        if (reset) begin car_d1 <= 8'h00; car_d2 <= 8'h00; end
-        else       begin car_d1 <= car;   car_d2 <= car_d1; end
-    end
+    
+//    reg [7:0] car_d1, car_d2;
+//    always @(posedge clk or posedge reset) begin
+//        if (reset) begin car_d1 <= 8'hFF; car_d2 <= 8'hFF; end
+//        else       begin car_d1 <= car;   car_d2 <= car_d1; end
+//    end
 
-    reg [127:0] uop_str;        // 16-char micro-operation description
-    reg [63:0]  uop_name_str;   // 8-char micro-step name (fetch1, store2, …)
-    always @(*) begin
-        if (reset) begin uop_str = "RESET           "; uop_name_str = "reset   "; end
+    reg [127:0] cu_command;        // 16-char micro-operation description
+    reg [63:0]  cu_phase;   // 8-char micro-step name (fetch1, store2, …)
+    always @(posedge clk) begin
+        if (reset) begin cu_command = "RESET           "; cu_phase = "reset   "; end
         else
         begin
-            case (car_d2)
-                8'h00: begin uop_str = "MAR<=PC         "; uop_name_str = "fetch1  "; end
-                8'h01: begin uop_str = "MBR<=IM[MAR]    "; uop_name_str = "fetch2  "; end
-                8'h02: begin uop_str = "IR,MAR,PC,DISP  "; uop_name_str = "fetch3  "; end
-                8'h10: begin uop_str = "MBR<=ACC        "; uop_name_str = "store1  "; end
-                8'h11: begin uop_str = "DM[MAR]<=MBR    "; uop_name_str = "store2  "; end
-                8'h20: begin uop_str = "MBR<=DM[MAR]    "; uop_name_str = "load1   "; end
-                8'h21: begin uop_str = "BR<=MBR         "; uop_name_str = "load2   "; end
-                8'h22: begin uop_str = "ACC<=BR         "; uop_name_str = "load3   "; end
-                8'h30: begin uop_str = "MBR<=DM[MAR]    "; uop_name_str = "add1    "; end
-                8'h31: begin uop_str = "BR<=MBR         "; uop_name_str = "add2    "; end
-                8'h32: begin uop_str = "ACC<=ACC+BR     "; uop_name_str = "add3    "; end
-                8'h38: begin uop_str = "MBR<=DM[MAR]    "; uop_name_str = "sub1    "; end
-                8'h39: begin uop_str = "BR<=MBR         "; uop_name_str = "sub2    "; end
-                8'h3A: begin uop_str = "ACC<=ACC-BR     "; uop_name_str = "sub3    "; end
-                8'h40: begin uop_str = "JMPGEZ:PC<=MAR  "; uop_name_str = "jmpgez1 "; end
-                8'h48: begin uop_str = "JMP:PC<=MAR     "; uop_name_str = "jmp1    "; end
-                8'h50: begin uop_str = "HALT            "; uop_name_str = "halt1   "; end
-                8'h58: begin uop_str = "MBR<=DM[MAR]    "; uop_name_str = "mpy1    "; end
-                8'h59: begin uop_str = "BR<=MBR         "; uop_name_str = "mpy2    "; end
-                8'h5A: begin uop_str = "{MR,ACC}<=MUL   "; uop_name_str = "mpy3    "; end
-                8'h68: begin uop_str = "MBR<=DM[MAR]    "; uop_name_str = "and1    "; end
-                8'h69: begin uop_str = "BR<=MBR         "; uop_name_str = "and2    "; end
-                8'h6A: begin uop_str = "ACC<=ACC&BR     "; uop_name_str = "and3    "; end
-                8'h70: begin uop_str = "MBR<=DM[MAR]    "; uop_name_str = "or1     "; end
-                8'h71: begin uop_str = "BR<=MBR         "; uop_name_str = "or2     "; end
-                8'h72: begin uop_str = "ACC<=ACC|BR     "; uop_name_str = "or3     "; end
-                8'h78: begin uop_str = "ACC<=~ACC       "; uop_name_str = "not1    "; end
-                8'h80: begin uop_str = "MBR<=DM[MAR]    "; uop_name_str = "shiftr1 "; end
-                8'h81: begin uop_str = "BR<=MBR         "; uop_name_str = "shiftr2 "; end
-                8'h82: begin uop_str = "ACC<=BR>>1      "; uop_name_str = "shiftr3 "; end
-                8'h88: begin uop_str = "MBR<=DM[MAR]    "; uop_name_str = "shiftl1 "; end
-                8'h89: begin uop_str = "BR<=MBR         "; uop_name_str = "shiftl2 "; end
-                8'h8A: begin uop_str = "ACC<=BR<<1      "; uop_name_str = "shiftl3 "; end
-                default: begin uop_str = "???             "; uop_name_str = "???     "; end
+            case (car)
+                8'h00: begin cu_command = "MAR<=PC         "; cu_phase = "fetch1  "; end
+                8'h01: begin cu_command = "MBR<=IM[MAR]    "; cu_phase = "fetch2  "; end
+                8'h02: begin cu_command = "IR,MAR,PC,DISP  "; cu_phase = "fetch3  "; end
+                8'h10: begin cu_command = "MBR<=ACC        "; cu_phase = "store1  "; end
+                8'h11: begin cu_command = "DM[MAR]<=MBR    "; cu_phase = "store2  "; end
+                8'h20: begin cu_command = "MBR<=DM[MAR]    "; cu_phase = "load1   "; end
+                8'h21: begin cu_command = "BR<=MBR         "; cu_phase = "load2   "; end
+                8'h22: begin cu_command = "ACC<=BR         "; cu_phase = "load3   "; end
+                8'h30: begin cu_command = "MBR<=DM[MAR]    "; cu_phase = "add1    "; end
+                8'h31: begin cu_command = "BR<=MBR         "; cu_phase = "add2    "; end
+                8'h32: begin cu_command = "ACC<=ACC+BR     "; cu_phase = "add3    "; end
+                8'h38: begin cu_command = "MBR<=DM[MAR]    "; cu_phase = "sub1    "; end
+                8'h39: begin cu_command = "BR<=MBR         "; cu_phase = "sub2    "; end
+                8'h3A: begin cu_command = "ACC<=ACC-BR     "; cu_phase = "sub3    "; end
+                8'h40: begin cu_command = "JMPGEZ:PC<=MAR  "; cu_phase = "jmpgez1 "; end
+                8'h48: begin cu_command = "JMP:PC<=MAR     "; cu_phase = "jmp1    "; end
+                8'h50: begin cu_command = "HALT            "; cu_phase = "halt1   "; end
+                8'h58: begin cu_command = "MBR<=DM[MAR]    "; cu_phase = "mpy1    "; end
+                8'h59: begin cu_command = "BR<=MBR         "; cu_phase = "mpy2    "; end
+                8'h5A: begin cu_command = "{MR,ACC}<=MUL   "; cu_phase = "mpy3    "; end
+                8'h68: begin cu_command = "MBR<=DM[MAR]    "; cu_phase = "and1    "; end
+                8'h69: begin cu_command = "BR<=MBR         "; cu_phase = "and2    "; end
+                8'h6A: begin cu_command = "ACC<=ACC&BR     "; cu_phase = "and3    "; end
+                8'h70: begin cu_command = "MBR<=DM[MAR]    "; cu_phase = "or1     "; end
+                8'h71: begin cu_command = "BR<=MBR         "; cu_phase = "or2     "; end
+                8'h72: begin cu_command = "ACC<=ACC|BR     "; cu_phase = "or3     "; end
+                8'h78: begin cu_command = "ACC<=~ACC       "; cu_phase = "not1    "; end
+                8'h80: begin cu_command = "MBR<=DM[MAR]    "; cu_phase = "shiftr1 "; end
+                8'h81: begin cu_command = "BR<=MBR         "; cu_phase = "shiftr2 "; end
+                8'h82: begin cu_command = "ACC<=BR>>1      "; cu_phase = "shiftr3 "; end
+                8'h88: begin cu_command = "MBR<=DM[MAR]    "; cu_phase = "shiftl1 "; end
+                8'h89: begin cu_command = "BR<=MBR         "; cu_phase = "shiftl2 "; end
+                8'h8A: begin cu_command = "ACC<=BR<<1      "; cu_phase = "shiftl3 "; end
+                default: begin cu_command = "???             "; cu_phase = "???     "; end
             endcase
          end
     end
