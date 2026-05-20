@@ -257,7 +257,7 @@ module CPU_top (
             BR        <= 16'h0000;
             ACC       <= 16'h0000;
             MR        <= 16'h0000;
-            port_out  <= '0;
+            port_out  <= 64'h0;
         end else begin
 
             // ---- MAR updates ----
