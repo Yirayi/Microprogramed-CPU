@@ -11,15 +11,15 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="1,239.561 ns"></ZoomStartTime>
-      <ZoomEndTime time="1,329.621 ns"></ZoomEndTime>
-      <Cursor1Time time="1,301.035 ns"></Cursor1Time>
+      <ZoomStartTime time="957.291 ns"></ZoomStartTime>
+      <ZoomEndTime time="1,014.742 ns"></ZoomEndTime>
+      <Cursor1Time time="1,000.000 ns"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="376"></NameColumnWidth>
-      <ValueColumnWidth column_width="266"></ValueColumnWidth>
+      <ValueColumnWidth column_width="146"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="10" />
+   <WVObjectSize size="12" />
    <wvobject fp_name="group155" type="group">
       <obj_property name="label">INSTRUCTION</obj_property>
       <obj_property name="DisplayName">label</obj_property>
@@ -111,5 +111,13 @@
    <wvobject fp_name="/AllInstr_tb/dut/halted" type="logic">
       <obj_property name="ElementShortName">halted</obj_property>
       <obj_property name="ObjectShortName">halted</obj_property>
+   </wvobject>
+   <wvobject fp_name="/AllInstr_tb/dut/port_out_0" type="array">
+      <obj_property name="ElementShortName">port_out_0[3:0][15:0]</obj_property>
+      <obj_property name="ObjectShortName">port_out_0[3:0][15:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/AllInstr_tb/dut/port_out_1" type="array">
+      <obj_property name="ElementShortName">port_out_1[15:0]</obj_property>
+      <obj_property name="ObjectShortName">port_out_1[15:0]</obj_property>
    </wvobject>
 </wave_config>

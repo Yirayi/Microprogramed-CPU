@@ -35,7 +35,7 @@ module ALL_top(
     wire [7:0] AN;
     wire [6:0] SEG;
     seven_seg_decimal sevenSegDisplay(
-    .clk.(clk),  
+    .clk(clk),  
     .reset(reset),     
     .value(segVal),     
     .AN(AN),    
