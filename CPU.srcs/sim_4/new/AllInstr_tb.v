@@ -43,8 +43,8 @@ module AllInstr_tb;
     reg  clk, reset;
     wire halted;
 
-    reg  [3:0][15:0] port_in;
-    wire [3:0][15:0] port_out;
+    reg  [63:0] port_in;
+    wire [63:0] port_out;
 
     CPU_top dut (
         .clk     (clk),
@@ -67,8 +67,8 @@ module AllInstr_tb;
 
     initial begin
         errors   = 0;
-        port_in  = '0;
-        port_in[0] = 16'hABCD;
+        port_in         = 64'h0;
+        port_in[15:0]   = 16'hABCD;   // port 0
         reset     = 1'b1;
         $display("=== All-Instructions Testbench ===");
         repeat (5) @(posedge clk);
@@ -92,8 +92,8 @@ module AllInstr_tb;
             check_8 ("IR",        tb_IR,     8'h07);
             check_16("ACC",       tb_ACC,    16'hABCD);
             check_16("MR",        tb_MR,     16'h0000);
-            check_16("port_out[0]",port_out[0],16'h002A);
-            check_16("port_out[1]",port_out[1],16'hFFFF);
+            check_16("port_out[0]",port_out[15:0], 16'h002A);
+            check_16("port_out[1]",port_out[31:16],16'hFFFF);
         end
 
         $display("===================================");
