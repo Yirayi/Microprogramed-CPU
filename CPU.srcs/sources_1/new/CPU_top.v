@@ -86,17 +86,9 @@
 module CPU_top (
     input  wire        clk,
     input  wire        reset,
-    output wire        halted,       // asserted when HALT instruction executes
-    // Output ports (CPU → peripherals)
-    output reg  [15:0] port_out_0,   // port 0 (e.g. 7-segment display)
-    output reg  [15:0] port_out_1,   // port 1
-    output reg  [15:0] port_out_2,   // port 2
-    output reg  [15:0] port_out_3,   // port 3
-    // Input ports (peripherals → CPU)
-    input  wire [15:0] port_in_0,    // port 0 (e.g. switches)
-    input  wire [15:0] port_in_1,    // port 1
-    input  wire [15:0] port_in_2,    // port 2
-    input  wire [15:0] port_in_3     // port 3
+    output wire        halted,              // asserted when HALT instruction executes
+    output reg  [3:0][15:0] port_out,      // output ports [0..3] → peripherals
+    input  wire [3:0][15:0] port_in        // input  ports [0..3] ← peripherals
 );
     wire clks=~clk;
     // -------------------------------------------------------
@@ -212,13 +204,6 @@ module CPU_top (
     // Memory phase: CAR in range 0x00-0x0F means fetch cycle
     wire is_fetch = (car[7:4] == 4'h0);
 
-    // Input port mux: select port_in by MAR
-    wire [15:0] port_in_mux =
-        (MAR == 8'h00) ? port_in_0 :
-        (MAR == 8'h01) ? port_in_1 :
-        (MAR == 8'h02) ? port_in_2 :
-        (MAR == 8'h03) ? port_in_3 :
-                         16'h0000;
 
     // -------------------------------------------------------
     // ALU
@@ -272,10 +257,7 @@ module CPU_top (
             BR        <= 16'h0000;
             ACC       <= 16'h0000;
             MR        <= 16'h0000;
-            port_out_0 <= 16'h0000;
-            port_out_1 <= 16'h0000;
-            port_out_2 <= 16'h0000;
-            port_out_3 <= 16'h0000;
+            port_out  <= '0;
         end else begin
 
             // ---- MAR updates ----
@@ -288,7 +270,7 @@ module CPU_top (
             if      (C3 && is_fetch) MBR <= im_dout;     // fetch: read IM
             else if (C3)             MBR <= dm_dout;     // execute: read DM
             else if (C11)            MBR <= ACC;         // STORE: capture ACC
-            else if (C26)            MBR <= port_in_mux; // IN: read port
+            else if (C26)            MBR <= port_in[MAR[1:0]]; // IN: read port
 
             // ---- IR update ----
             if (C4) IR <= MBR[15:8];
@@ -318,14 +300,7 @@ module CPU_top (
             if (C19) MR <= alu_mr;
 
             // ---- Output port write (C25: OUT [port]) ----
-            if (C25) begin
-                case (MAR[1:0])
-                    2'h0: port_out_0 <= ACC;
-                    2'h1: port_out_1 <= ACC;
-                    2'h2: port_out_2 <= ACC;
-                    2'h3: port_out_3 <= ACC;
-                endcase
-            end
+            if (C25) port_out[MAR[1:0]] <= ACC;
 
         end
     end

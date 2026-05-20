@@ -19,10 +19,10 @@
 //   JMPGEZ [0x1C]       → NOT taken (ACC[15]=1); falls through
 //   LOAD  [E0]          → ACC = 10  (proves not-taken path ran)
 //   LOADI 42            → ACC = 0x002A
-//   OUT   [0]           → port_out_0 = 0x002A
+//   OUT   [0]           → port_out[0] = 0x002A
 //   LOADI 255           → ACC = 0xFFFF  (sign-extend 0xFF)
-//   OUT   [1]           → port_out_1 = 0xFFFF
-//   IN    [0]           → ACC = port_in_0 = 0xABCD
+//   OUT   [1]           → port_out[1] = 0xFFFF
+//   IN    [0]           → ACC = port_in[0] = 0xABCD
 //   HALT                → freezes at CAR=0x50
 //
 // Expected final state (after HALT at PC=0x1C):
@@ -32,8 +32,8 @@
 //   IR         = 0x07
 //   ACC        = 0xABCD (proves IN[0] was reached and JMPGEZ-not-taken worked)
 //   MR         = 0x0000
-//   port_out_0 = 0x002A (proves LOADI 42 + OUT [0])
-//   port_out_1 = 0xFFFF (proves LOADI 255 + OUT [1])
+//   port_out[0] = 0x002A (proves LOADI 42 + OUT [0])
+//   port_out[1] = 0xFFFF (proves LOADI 255 + OUT [1])
 // ============================================================
 
 `timescale 1ns / 1ps
@@ -43,22 +43,15 @@ module AllInstr_tb;
     reg  clk, reset;
     wire halted;
 
-    // Input ports driven by testbench
-    reg  [15:0] port_in_0;
-    wire [15:0] port_out_0, port_out_1, port_out_2, port_out_3;
+    reg  [3:0][15:0] port_in;
+    wire [3:0][15:0] port_out;
 
     CPU_top dut (
-        .clk       (clk),
-        .reset     (reset),
-        .halted    (halted),
-        .port_out_0(port_out_0),
-        .port_out_1(port_out_1),
-        .port_out_2(port_out_2),
-        .port_out_3(port_out_3),
-        .port_in_0 (port_in_0),
-        .port_in_1 (16'h0000),
-        .port_in_2 (16'h0000),
-        .port_in_3 (16'h0000)
+        .clk     (clk),
+        .reset   (reset),
+        .halted  (halted),
+        .port_out(port_out),
+        .port_in (port_in)
     );
 
     initial clk = 1'b0;
@@ -73,8 +66,9 @@ module AllInstr_tb;
     integer cycle, errors;
 
     initial begin
-        errors    = 0;
-        port_in_0 = 16'hABCD;
+        errors   = 0;
+        port_in  = '0;
+        port_in[0] = 16'hABCD;
         reset     = 1'b1;
         $display("=== All-Instructions Testbench ===");
         repeat (5) @(posedge clk);
@@ -98,8 +92,8 @@ module AllInstr_tb;
             check_8 ("IR",        tb_IR,     8'h07);
             check_16("ACC",       tb_ACC,    16'hABCD);
             check_16("MR",        tb_MR,     16'h0000);
-            check_16("port_out_0",port_out_0,16'h002A);
-            check_16("port_out_1",port_out_1,16'hFFFF);
+            check_16("port_out[0]",port_out[0],16'h002A);
+            check_16("port_out[1]",port_out[1],16'hFFFF);
         end
 
         $display("===================================");
