@@ -86,21 +86,21 @@ module ControlUnit (
     always @(negedge clk or posedge reset) begin
         if (reset) begin
             car <= 8'hFF;
-        end else if (!C21) begin
-            // Priority: C2 > C1 > C0
-            if (C2)         // CAR <= 0
-                car <= 8'h00;
-            else if (C1)    // CAR <= dispatch(mbr_high)
-                car <= dispatch(mbr_high);
-            else if (C0)    // CAR <= CAR+1
-                car <= car + 8'h01;
-            // else: no sequencing bits -> stay (should not happen except HALT)
         end
-        // C21 asserted: CAR freezes (CPU halted)
-    end
-
-    always @(negedge reset) begin
-        car <= 8'h00;
+        else begin
+            if(!reset && car ==8'hFF ) car <= 8'h00;
+            if (!C21) begin
+                // Priority: C2 > C1 > C0
+                if (C2)         // CAR <= 0
+                    car <= 8'h00;
+                else if (C1)    // CAR <= dispatch(mbr_high)
+                    car <= dispatch(mbr_high);
+                else if (C0)    // CAR <= CAR+1
+                    car <= car + 8'h01;
+                // else: no sequencing bits -> stay (should not happen except HALT)
+            end
+            // C21 asserted: CAR freezes (CPU halted)
+          end
     end
 
 
