@@ -256,7 +256,7 @@ end
 
 // --- Font pixel ---
 wire [7:0] fbyte = fnt[{cidx, frow}];          // {5-bit char, 3-bit row} = 8-bit addr
-wire px = in_panel && fbyte[7 - fpx];
+wire px = in_panel && fbyte[fpx];
 
 // --- Separator: 2px vertical gray line at x=566..567 ---
 wire sep = active && (hc >= 10'd566) && (hc < 10'd568);

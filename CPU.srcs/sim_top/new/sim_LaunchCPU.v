@@ -69,17 +69,7 @@ module sim_LaunchCPU;
             force dut.step_pulse = 1'b0;
             release dut.step_pulse;
 
-            // Wait for ControlUnit to arm (instr_running rises)
-            // or for HALT to assert immediately (unlikely but safe)
-            @(posedge instr_running or posedge halted);
-
-            // Wait for instruction to finish (instr_running falls)
-            // HALT never fires C2, so also exit on posedge halted
-            if (!halted)
-                @(negedge instr_running or posedge halted);
-
-            // Let the final posedge register updates settle
-            repeat(2) @(posedge clk);
+            repeat(10) @(posedge clk);
         end
     endtask
 
@@ -95,7 +85,7 @@ module sim_LaunchCPU;
 
         // Wait until BRAM init guard clears
         @(negedge dut.cpu.internal_reset);
-        repeat(4) @(posedge clk);
+        repeat(6) @(posedge clk);
 
         // Step through the program one instruction at a time
         while (!halted)

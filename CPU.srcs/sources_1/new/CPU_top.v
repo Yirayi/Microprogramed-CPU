@@ -127,7 +127,7 @@ module CPU_top (
     // -------------------------------------------------------
     wire [7:0]  car;
     wire [31:0] micro_instr;
-
+    wire can_step;
     ControlUnit cu (
         .clk        (clk),
         .reset      (internal_reset),
@@ -136,7 +136,8 @@ module CPU_top (
         .car        (car),
         .halted     (halted),
         .exec_mode  (exec_mode),
-        .step_pulse (step_pulse)
+        .step_pulse (step_pulse),
+        .can_step(can_step)
     );
 
     // -------------------------------------------------------
@@ -271,49 +272,49 @@ module CPU_top (
             MR        <= 16'h0000;
             port_out  <= 64'h0;
         end else begin
-
-            // ---- MAR updates ----
-            // C10 and C5 never assert in the same micro-cycle.
-            if      (C10) MAR <= PC;
-            else if (C5)  MAR <= MBR[7:0];
-
-            // ---- MBR updates ----
-            // C3, C11, C26 never assert in the same micro-cycle.
-            if      (C3 && is_fetch) MBR <= im_dout;     // fetch: read IM
-            else if (C3)             MBR <= dm_dout;     // execute: read DM
-            else if (C11)            MBR <= ACC;         // STORE: capture ACC
-            else if (C26)            MBR <= port_in[MAR[1:0]]; // IN: read port
-
-            // ---- IR update ----
-            if (C4) IR <= MBR[15:8];
-
-            // ---- PC updates ----
-            // C6 (PC+1) happens in fetch T3.
-            // C22 (JMP) and C23 (JMPGEZ) happen in a single execute cycle.
-            // C6 never combines with C22/C23 in the same micro-cycle.
-            if      (C22)               PC <= MAR;
-            else if (C23 && !ACC[15])   PC <= MAR;   // JMPGEZ: only if ACC>=0
-            else if (C6)                PC <= PC + 8'h01;
-
-            // ---- BR update ----
-            if (C7) BR <= MBR;
-
-            // ---- ACC updates ----
-            // C8 (clear), C24 (LOADI), and ALU ops are mutually exclusive.
-            if (C8) begin
-                ACC <= 16'h0000;
-            end else if (C24) begin
-                ACC <= {{8{MAR[7]}}, MAR};   // LOADI: sign-extend 8-bit immediate
-            end else if (C9 | C13 | C14 | C15 | C16 | C17 | C18 | C19 | C20) begin
-                ACC <= alu_result;
+        if(can_step) begin
+                // ---- MAR updates ----
+                // C10 and C5 never assert in the same micro-cycle.
+                if      (C10) MAR <= PC;
+                else if (C5)  MAR <= MBR[7:0];
+    
+                // ---- MBR updates ----
+                // C3, C11, C26 never assert in the same micro-cycle.
+                if      (C3 && is_fetch) MBR <= im_dout;     // fetch: read IM
+                else if (C3)             MBR <= dm_dout;     // execute: read DM
+                else if (C11)            MBR <= ACC;         // STORE: capture ACC
+                else if (C26)            MBR <= port_in[MAR[1:0]]; // IN: read port
+    
+                // ---- IR update ----
+                if (C4) IR <= MBR[15:8];
+    
+                // ---- PC updates ----
+                // C6 (PC+1) happens in fetch T3.
+                // C22 (JMP) and C23 (JMPGEZ) happen in a single execute cycle.
+                // C6 never combines with C22/C23 in the same micro-cycle.
+                if      (C22)               PC <= MAR;
+                else if (C23 && !ACC[15])   PC <= MAR;   // JMPGEZ: only if ACC>=0
+                else if (C6)                PC <= PC + 8'h01;
+    
+                // ---- BR update ----
+                if (C7) BR <= MBR;
+    
+                // ---- ACC updates ----
+                // C8 (clear), C24 (LOADI), and ALU ops are mutually exclusive.
+                if (C8) begin
+                    ACC <= 16'h0000;
+                end else if (C24) begin
+                    ACC <= {{8{MAR[7]}}, MAR};   // LOADI: sign-extend 8-bit immediate
+                end else if (C9 | C13 | C14 | C15 | C16 | C17 | C18 | C19 | C20) begin
+                    ACC <= alu_result;
+                end
+    
+                // ---- MR update (multiply high word) ----
+                if (C19) MR <= alu_mr;
+    
+                // ---- Output port write (C25: OUT [port]) ----
+                if (C25) port_out[MAR[1:0]] <= ACC;
             end
-
-            // ---- MR update (multiply high word) ----
-            if (C19) MR <= alu_mr;
-
-            // ---- Output port write (C25: OUT [port]) ----
-            if (C25) port_out[MAR[1:0]] <= ACC;
-
         end
     end
 

@@ -49,7 +49,8 @@ module ControlUnit (
     output reg  [7:0]  car,           // Control Address Register
     output wire        halted,        // asserted when HALT microop active
     input  wire [1:0]  exec_mode,     // 00=run, 01=instr-step, 10=micro-step
-    input  wire        step_pulse     // single-cycle step trigger from BTNC
+    input  wire        step_pulse,     // single-cycle step trigger from BTNC
+    output wire can_step                 //tell cpu whether to execute
 );
 
     // ---- Extract sequencing control bits ----
@@ -65,7 +66,7 @@ module ControlUnit (
     //               cleared when C2 fires (instruction boundary reached)
     reg instr_running;
 
-    wire can_step =
+    assign can_step =
         (exec_mode == 2'b00) ||                                // free-run
         (exec_mode == 2'b01 && (instr_running || step_pulse)) || // instr-step
         (exec_mode == 2'b10 && step_pulse);                    // micro-step
@@ -98,22 +99,11 @@ module ControlUnit (
     always @(negedge clk or posedge reset) begin
         if (reset) begin
             car           <= 8'hFF;
-            instr_running <= 1'b0;
         end else begin
             // Post-reset: FF→00 (bypasses step gate so startup always occurs)
             if (car == 8'hFF) begin
                 car <= 8'h00;
             end else begin
-                // instr_running state machine (only meaningful in mode 01)
-                if (exec_mode == 2'b01) begin
-                    if (C2 && instr_running)
-                        // Instruction ended; re-arm if button held, else stop
-                        instr_running <= step_pulse;
-                    else if (!instr_running && step_pulse)
-                        instr_running <= 1'b1;
-                end else
-                    instr_running <= 1'b0;
-
                 // CAR sequencing, gated by can_step and HALT
                 if (!C21 && can_step) begin
                     if      (C2) car <= 8'h00;
@@ -122,6 +112,20 @@ module ControlUnit (
                 end
                 // else: C21 (HALT) or step not permitted → CAR holds
             end
+        end
+    end
+    always @(posedge clk or posedge reset) begin
+        if (reset) instr_running <= 1'b0;
+        else begin
+                // instr_running state machine (only meaningful in mode 01)
+            if (exec_mode == 2'b01) begin
+                if (C2 && instr_running)
+                    // Instruction ended; re-arm if button held, else stop
+                    instr_running <= step_pulse;
+                else if (!instr_running && step_pulse)
+                    instr_running <= 1'b1;
+            end else
+                instr_running <= 1'b0;
         end
     end
 
