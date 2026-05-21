@@ -49,8 +49,11 @@ module ControlUnit (
     output reg  [7:0]  car,           // Control Address Register
     output wire        halted,        // asserted when HALT microop active
     input  wire [1:0]  exec_mode,     // 00=run, 01=instr-step, 10=micro-step
-    input  wire        step_pulse,     // single-cycle step trigger from BTNC
-    output wire can_step                 //tell cpu whether to execute
+    input  wire        step_pulse,    // single-cycle step trigger from BTNC
+    output wire        can_step,      // step gate: tell CPU_top whether to execute
+    // VGA history capture
+    output reg         capture_pulse, // 1-cycle negedge pulse → push ring buffer
+    output reg  [7:0]  snap_car       // CAR latched before advance (micro-step)
 );
 
     // ---- Extract sequencing control bits ----
@@ -99,7 +102,13 @@ module ControlUnit (
     always @(negedge clk or posedge reset) begin
         if (reset) begin
             car           <= 8'hFF;
+            instr_running <= 1'b0;
+            capture_pulse <= 1'b0;
+            snap_car      <= 8'h00;
         end else begin
+            // Default: no capture this cycle
+            capture_pulse <= 1'b0;
+
             // Post-reset: FF→00 (bypasses step gate so startup always occurs)
             if (car == 8'hFF) begin
                 car <= 8'h00;
@@ -111,6 +120,16 @@ module ControlUnit (
                     else if (C0) car <= car + 8'h01;
                 end
                 // else: C21 (HALT) or step not permitted → CAR holds
+
+                // VGA capture: fire on instruction complete (mode 01)
+                // or on each micro-step advance (mode 10).
+                // NBA semantics: snap_car latches OLD car (before the update above).
+                if (exec_mode == 2'b01 && C2 && instr_running) begin
+                    capture_pulse <= 1'b1;
+                end else if (exec_mode == 2'b10 && step_pulse && can_step) begin
+                    capture_pulse <= 1'b1;
+                    snap_car      <= car;   // latch pre-advance CAR
+                end
             end
         end
     end

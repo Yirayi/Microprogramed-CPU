@@ -93,7 +93,10 @@ module CPU_top (
     output wire [96:0] video_bus,
     // single-step debug controls (from ALL_top / switches+button)
     input  wire [1:0]  exec_mode,          // 00=run 01=instr-step 10=micro-step
-    input  wire        step_pulse          // single-cycle trigger from BTNC
+    input  wire        step_pulse,         // single-cycle trigger from BTNC
+    // VGA history capture signals
+    output wire        capture_pulse,      // 1-cycle pulse: push to VGA ring buffer
+    output wire [7:0]  snap_car            // pre-advance CAR for micro-step display
 );
     wire clks=~clk;
     // -------------------------------------------------------
@@ -129,15 +132,17 @@ module CPU_top (
     wire [31:0] micro_instr;
     wire can_step;
     ControlUnit cu (
-        .clk        (clk),
-        .reset      (internal_reset),
-        .micro_instr(micro_instr),
-        .mbr_high   (MBR[15:8]),   // opcode used for dispatch (C1)
-        .car        (car),
-        .halted     (halted),
-        .exec_mode  (exec_mode),
-        .step_pulse (step_pulse),
-        .can_step(can_step)
+        .clk          (clk),
+        .reset        (internal_reset),
+        .micro_instr  (micro_instr),
+        .mbr_high     (MBR[15:8]),   // opcode used for dispatch (C1)
+        .car          (car),
+        .halted       (halted),
+        .exec_mode    (exec_mode),
+        .step_pulse   (step_pulse),
+        .can_step     (can_step),
+        .capture_pulse(capture_pulse),
+        .snap_car     (snap_car)
     );
 
     // -------------------------------------------------------

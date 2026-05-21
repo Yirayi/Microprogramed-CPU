@@ -33,6 +33,8 @@ module ALL_top (
     wire halted;
     wire [3:0][15:0] port_out;
     wire [96:0] video_bus;
+    wire        capture_pulse;
+    wire [7:0]  snap_car;
 
     // ---- SW 2-stage synchronizer (metastability) ----
     (* ASYNC_REG = "TRUE" *) reg [15:0] sw_s1, sw_s2;
@@ -63,14 +65,16 @@ module ALL_top (
     assign port_in[3] = 16'h0;
 
     CPU_top cpu (
-        .clk       (clk),
-        .reset     (reset),
-        .halted    (halted),
-        .port_out  (port_out),
-        .port_in   (port_in),
-        .video_bus (video_bus),
-        .exec_mode (exec_mode),
-        .step_pulse(step_pulse)
+        .clk          (clk),
+        .reset        (reset),
+        .halted       (halted),
+        .port_out     (port_out),
+        .port_in      (port_in),
+        .video_bus    (video_bus),
+        .exec_mode    (exec_mode),
+        .step_pulse   (step_pulse),
+        .capture_pulse(capture_pulse),
+        .snap_car     (snap_car)
     );
 
     seven_seg_decimal seg_disp (
@@ -82,14 +86,17 @@ module ALL_top (
     );
 
     vga_display vga (
-        .clk      (clk),
-        .reset    (reset),
-        .video_bus(video_bus),
-        .vga_hs   (vga_hs),
-        .vga_vs   (vga_vs),
-        .vga_r    (vga_r),
-        .vga_g    (vga_g),
-        .vga_b    (vga_b)
+        .clk          (clk),
+        .reset        (reset),
+        .video_bus    (video_bus),
+        .exec_mode    (exec_mode),
+        .capture_pulse(capture_pulse),
+        .snap_car     (snap_car),
+        .vga_hs       (vga_hs),
+        .vga_vs       (vga_vs),
+        .vga_r        (vga_r),
+        .vga_g        (vga_g),
+        .vga_b        (vga_b)
     );
 
 endmodule
