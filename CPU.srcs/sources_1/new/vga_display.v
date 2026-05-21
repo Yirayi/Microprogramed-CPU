@@ -39,25 +39,29 @@ wire [15:0] v_MR     = video_bus[87:72];
 wire [7:0]  v_CAR    = video_bus[95:88];
 wire        v_halted = video_bus[96];
 
-// --- 25 MHz pixel clock (÷4 from 100 MHz) ---
+// --- Pixel clock enable: 25 MHz effective rate (100 MHz ÷ 4) ---
+// Uses clock-enable on the 100 MHz master clock to avoid Vivado
+// derived-clock DRC errors that occur with 'posedge pclk'.
 reg [1:0] cdiv;
 always @(posedge clk or posedge reset)
     if (reset) cdiv <= 0; else cdiv <= cdiv + 1;
-wire pclk = cdiv[1];
+wire pclk_en = (cdiv == 2'd3); // one-cycle pulse every 4 clk cycles
 
-// --- VGA 640×480@60Hz counters ---
+// --- VGA 640×480@60Hz counters (100 MHz clock, advance on pclk_en) ---
 localparam H_ACT=640, H_TOT=800;
 localparam H_SS=656,  H_SE=752;   // hsync active window
 localparam V_ACT=480, V_TOT=525;
 localparam V_SS=490,  V_SE=492;   // vsync active window
 
 reg [9:0] hc, vc;
-always @(posedge pclk or posedge reset) begin
+always @(posedge clk or posedge reset) begin
     if (reset) begin hc <= 0; vc <= 0; end
-    else if (hc == H_TOT-1) begin
-        hc <= 0;
-        vc <= (vc == V_TOT-1) ? 10'd0 : vc + 1;
-    end else hc <= hc + 1;
+    else if (pclk_en) begin
+        if (hc == H_TOT-1) begin
+            hc <= 0;
+            vc <= (vc == V_TOT-1) ? 10'd0 : vc + 1;
+        end else hc <= hc + 1;
+    end
 end
 
 assign vga_hs = ~(hc >= H_SS && hc < H_SE);

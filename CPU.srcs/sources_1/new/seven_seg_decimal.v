@@ -62,32 +62,33 @@ module seven_seg_decimal (
     end
 
     // Segment decoder
-    // SEG[6:0] = {g, f, e, d, c, b, a} = {CG, CF, CE, CD, CC, CB, CA}
-    // Active-low: 0 = ON
+    // XDC pin mapping: SEG[6]=CA(a), SEG[5]=CB(b), SEG[4]=CC(c),
+    //                  SEG[3]=CD(d), SEG[2]=CE(e), SEG[1]=CF(f), SEG[0]=CG(g)
+    // So SEG[6:0] = {a, b, c, d, e, f, g}  (active-low: 0 = ON)
     //
-    //  Digit  Segments lit   {g f e d c b a}
-    //    0    a b c d e f     1 0 0 0 0 0 0  = 7'b100_0000
-    //    1        b c         1 1 1 1 0 0 1  = 7'b111_1001
-    //    2    a b   d e   g   0 1 0 0 1 0 0  = 7'b010_0100
-    //    3    a b c d     g   0 1 1 0 0 0 0  = 7'b011_0000
-    //    4        b c   f g   0 0 1 1 0 0 1  = 7'b001_1001
-    //    5    a   c d   f g   0 0 1 0 0 1 0  = 7'b001_0010
-    //    6    a   c d e f g   0 0 0 0 0 1 0  = 7'b000_0010
-    //    7    a b c           1 1 1 1 0 0 0  = 7'b111_1000
-    //    8    a b c d e f g   0 0 0 0 0 0 0  = 7'b000_0000
-    //    9    a b c d   f g   0 0 1 0 0 0 0  = 7'b001_0000
+    //  Digit  Segments ON     {a b c d e f g}
+    //    0    a b c d e f      0 0 0 0 0 0 1  = 7'b000_0001
+    //    1        b c          1 0 0 1 1 1 1  = 7'b100_1111
+    //    2    a b   d e   g    0 0 1 0 0 1 0  = 7'b001_0010
+    //    3    a b c d     g    0 0 0 0 1 1 0  = 7'b000_0110
+    //    4        b c   f g    1 0 0 1 1 0 0  = 7'b100_1100
+    //    5    a   c d   f g    0 1 0 0 1 0 0  = 7'b010_0100
+    //    6    a   c d e f g    0 1 0 0 0 0 0  = 7'b010_0000
+    //    7    a b c            0 0 0 1 1 1 1  = 7'b000_1111
+    //    8    a b c d e f g    0 0 0 0 0 0 0  = 7'b000_0000
+    //    9    a b c d   f g    0 0 0 0 1 0 0  = 7'b000_0100
     always @(*) begin
         case (digit)
-            4'd0: SEG = 7'b100_0000;
-            4'd1: SEG = 7'b111_1001;
-            4'd2: SEG = 7'b010_0100;
-            4'd3: SEG = 7'b011_0000;
-            4'd4: SEG = 7'b001_1001;
-            4'd5: SEG = 7'b001_0010;
-            4'd6: SEG = 7'b000_0010;
-            4'd7: SEG = 7'b111_1000;
+            4'd0: SEG = 7'b000_0001;
+            4'd1: SEG = 7'b100_1111;
+            4'd2: SEG = 7'b001_0010;
+            4'd3: SEG = 7'b000_0110;
+            4'd4: SEG = 7'b100_1100;
+            4'd5: SEG = 7'b010_0100;
+            4'd6: SEG = 7'b010_0000;
+            4'd7: SEG = 7'b000_1111;
             4'd8: SEG = 7'b000_0000;
-            4'd9: SEG = 7'b001_0000;
+            4'd9: SEG = 7'b000_0100;
             default: SEG = 7'b111_1111; // all segments off
         endcase
     end
