@@ -11,15 +11,15 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="962.596 ns"></ZoomStartTime>
-      <ZoomEndTime time="1,189.863 ns"></ZoomEndTime>
-      <Cursor1Time time="1,019.821 ns"></Cursor1Time>
+      <ZoomStartTime time="38,763.134 ns"></ZoomStartTime>
+      <ZoomEndTime time="38,816.646 ns"></ZoomEndTime>
+      <Cursor1Time time="90.000 ns"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="490"></NameColumnWidth>
-      <ValueColumnWidth column_width="191"></ValueColumnWidth>
+      <ValueColumnWidth column_width="171"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="5" />
+   <WVObjectSize size="6" />
    <wvobject fp_name="group63" type="group">
       <obj_property name="label">Instruction</obj_property>
       <obj_property name="DisplayName">label</obj_property>
@@ -73,5 +73,9 @@
    <wvobject fp_name="/SumProgram_tb/dut/ACC" type="array">
       <obj_property name="ElementShortName">ACC[15:0]</obj_property>
       <obj_property name="ObjectShortName">ACC[15:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/SumProgram_tb/seg_disp/value" type="array">
+      <obj_property name="ElementShortName">value[15:0]</obj_property>
+      <obj_property name="ObjectShortName">value[15:0]</obj_property>
    </wvobject>
 </wave_config>

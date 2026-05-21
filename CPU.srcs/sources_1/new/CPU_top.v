@@ -113,7 +113,9 @@ module CPU_top (
     // -------------------------------------------------------
     wire cm_rsta_busy;
     wire im_rsta_busy;
-    wire internal_reset = reset | cm_rsta_busy | im_rsta_busy;
+    wire dm_rsta_busy;
+    wire dm_rstb_busy;
+    wire internal_reset = reset | cm_rsta_busy | im_rsta_busy|dm_rsta_busy|dm_rstb_busy;
 
     // -------------------------------------------------------
     // Control Unit
@@ -169,10 +171,13 @@ module CPU_top (
         .addra(MAR),
         .dina (MBR),
         .wea  (dm_we),
+        .rsta_busy(dm_rsta_busy),
         // Read port B
         .clkb (clks),
         .addrb(MAR),
-        .doutb(dm_dout)
+        .doutb(dm_dout),
+        .rstb(reset),
+        .rstb_busy(dm_rstb_busy)
     );
 
     // -------------------------------------------------------

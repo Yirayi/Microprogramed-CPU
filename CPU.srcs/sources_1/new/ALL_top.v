@@ -15,11 +15,11 @@
 
 module ALL_top (
     input  wire       clk,
-    input  wire       reset,
+    input  wire       reset_btn,
     output wire [7:0] AN,
     output wire [6:0] SEG
 );
-
+    wire reset = ~reset_btn;  // 取反，按下按钮才触发高电平复位
     wire halted;
     wire [3:0][15:0] port_out;
 
