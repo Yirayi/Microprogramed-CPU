@@ -1,0 +1,34 @@
+; ============================================================
+; Instruction format (16-bit): [15:8]=opcode  [7:0]=operand/address X
+;
+; Opcode table:
+;   01 = STORE X    ACC -> DM[X]
+;   02 = LOAD X     DM[X] -> ACC
+;   03 = ADD X      ACC + DM[X] -> ACC
+;   04 = SUB X      ACC - DM[X] -> ACC
+;   05 = JMPGEZ X   if ACC >= 0 then X -> PC  else PC+1 -> PC
+;   06 = JMP X      X -> PC  (unconditional)
+;   07 = HALT       freeze execution
+;   08 = MPY X      ACC * DM[X] -> {MR, ACC}  (unsigned 32-bit result)
+;   09 = LOADI imm8 sign_extend(imm8) -> ACC
+;                     operand field is an 8-bit signed immediate (-128..127)
+;                     encoded unsigned (0x00-0xFF); e.g. LOADI 255 -> 0xFFFF
+;   0A = AND X      ACC AND DM[X] -> ACC
+;   0B = OR X       ACC OR  DM[X] -> ACC
+;   0C = NOT        NOT ACC -> ACC  (operand field ignored)
+;   0D = SHIFTR X   DM[X] >> 1 -> ACC  (logical shift right)
+;   0E = SHIFTL X   DM[X] << 1 -> ACC  (logical shift left)
+;   0F = OUT X      ACC -> port_out[X]
+;                     writes ACC to output port register X (0-3)
+;                     port_out[0] drives the 7-segment display in ALL_top
+;   10 = IN X       port_in[X] -> ACC
+;                     reads input port X (0-3) into ACC
+;
+; Notes:
+;   - All memory operands X are 8-bit addresses into DataMemory (DM[]).
+;   - LOADI uses the operand field as an immediate value, not a DM address.
+;   - OUT/IN use the operand field as a port number (0-3), not a DM address.
+;   - JMPGEZ tests bit 15 of ACC: jump taken if ACC[15]=0 (value >= 0).
+;   - MPY stores the low 16 bits in ACC and high 16 bits in the MR register.
+;   - HALT freezes the CAR; the CPU stays halted until external reset.
+; ============================================================

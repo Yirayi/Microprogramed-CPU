@@ -26,7 +26,10 @@
 ;   Bit 21  C21 : HALT  (freeze CAR)
 ;   Bit 22  C22 : PC  <= MAR  (unconditional jump)
 ;   Bit 23  C23 : if ACC[15]=0: PC <= MAR  (JMPGEZ)
-;   Bits 31:24  : unused (zero)
+;   Bit 24  C24 : ACC <= {{8{MAR[7]}}, MAR}  (sign-extend 8-bit immediate)
+;   Bit 25  C25 : port_out_reg[MAR] <= ACC   (output to peripheral port)
+;   Bit 26  C26 : MBR <= port_in_reg[MAR]   (input from peripheral port)
+;   Bits 31:27  : unused (zero)
 ;
 ; CAR address map:
 ;   0x00-0x02  Fetch cycle (common prefix for all instructions)
@@ -43,6 +46,9 @@
 ;   0x78       NOT
 ;   0x80-0x82  SHIFTR X
 ;   0x88-0x8A  SHIFTL X
+;   0x90       LOADI imm8
+;   0xA0       OUT [port]
+;   0xA8-0xAA  IN [port]
 ; ============================================================
 
 memory_initialization_radix=16;
@@ -172,7 +178,36 @@ memory_initialization_vector=
 00040004,
 ; 0x8B-0x8F : unused
 00000000, 00000000, 00000000, 00000000, 00000000,
-; --- CAR 0x90-0xFF : unused (117 entries) ---
+; --- LOADI imm8 (opcode=09, CAR 0x90-0x97) ---
+; ACC <= {{8{MAR[7]}}, MAR}  sign-extend 8-bit operand to 16-bit ACC
+; Bit 24 C24 : ACC <= sign_extend(MAR)
+; Bit  2 C2  : CAR <= 0  (return to fetch)
+; 0x90 LOADI : ACC<=sext(MAR) (C24), C2->fetch
+01000004,
+; 0x91-0x97 : unused
+00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
+; --- CAR 0x98-0x9F : unused ---
+00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
+; --- OUT [port] (opcode=0F, CAR 0xA0-0xA7) ---
+; port_out_reg[port] <= ACC
+; Bit 25 C25 : port_out[MAR] <= ACC
+; Bit  2 C2  : CAR <= 0  (return to fetch)
+; 0xA0 OUT : port_out[MAR]<=ACC (C25), C2->fetch
+02000004,
+; 0xA1-0xA7 : unused
+00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
+; --- IN [port] (opcode=10, CAR 0xA8-0xAF) ---
+; ACC <= port_in_reg[port]  (same 3-step structure as LOAD)
+; Bit 26 C26 : MBR <= port_in[MAR]
+; 0xA8 IN T1 : MBR<=port_in[MAR] (C26), C0
+04000001,
+; 0xA9 IN T2 : BR<=MBR (C7), C0
+00000081,
+; 0xAA IN T3 : ACC<=BR (C20), C2->fetch
+00100004,
+; 0xAB-0xAF : unused
+00000000, 00000000, 00000000, 00000000, 00000000,
+; --- CAR 0xB0-0xFF : unused (80 entries) ---
 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
@@ -182,9 +217,4 @@ memory_initialization_vector=
 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
-00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
-00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
-00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
-00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
-00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
-00000000;
+00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000;

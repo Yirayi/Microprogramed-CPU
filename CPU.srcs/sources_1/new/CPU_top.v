@@ -50,6 +50,15 @@
 //   C21 [21] HALT
 //   C22 [22] PC  <= MAR
 //   C23 [23] if ACC[15]=0: PC <= MAR  (JMPGEZ)
+//   C24 [24] ACC <= {{8{MAR[7]}}, MAR}  (sign-extend 8-bit immediate → ACC)
+//   C25 [25] port_out_reg[MAR] <= ACC   (write ACC to output port MAR)
+//   C26 [26] MBR <= port_in_reg[MAR]   (read input port MAR into MBR)
+//
+// I/O ports (explicit port-addressed I/O, 4 ports each direction):
+//   OUT [port] (opcode=0F): port_out_reg[port] <= ACC  (ACC→peripheral)
+//   IN  [port] (opcode=10): ACC <= port_in_reg[port]   (peripheral→ACC)
+//   port_out_reg resets to 0x0000 on internal_reset.
+//   port_in_reg  are combinational inputs (external signals).
 //
 // Memory phase select:
 //   is_fetch = (car[7:4] == 4'h0)
@@ -75,11 +84,13 @@
 `timescale 1ns / 1ps
 
 module CPU_top (
-    input  wire clk,
-    input  wire reset,
-    output wire halted    // asserted when HALT instruction executes
+    input  wire        clk,
+    input  wire        reset,
+    output wire        halted,              // asserted when HALT instruction executes
+    output reg  [3:0][15:0] port_out,      // output ports [0..3] → peripherals
+    input  wire [3:0][15:0] port_in        // input  ports [0..3] ← peripherals
 );
-
+    wire clks=~clk;
     // -------------------------------------------------------
     // Internal registers
     // -------------------------------------------------------
@@ -136,7 +147,7 @@ module CPU_top (
     wire [15:0] im_dout;
 
     InstructionMemory im (
-        .clka      (clk),
+        .clka      (clks),
         .rsta      (reset),
         .addra     (MAR),
         .douta     (im_dout),
@@ -154,12 +165,12 @@ module CPU_top (
 
     DataMemory dm (
         // Write port A
-        .clka (clk),
+        .clka (clks),
         .addra(MAR),
         .dina (MBR),
         .wea  (dm_we),
         // Read port B
-        .clkb (clk),
+        .clkb (clks),
         .addrb(MAR),
         .doutb(dm_dout)
     );
@@ -186,9 +197,13 @@ module CPU_top (
     wire C20 = micro_instr[20];   // ACC <= BR
     wire C22 = micro_instr[22];   // PC  <= MAR
     wire C23 = micro_instr[23];   // if ACC[15]=0: PC <= MAR
+    wire C24 = micro_instr[24];   // ACC <= sign_extend(MAR)
+    wire C25 = micro_instr[25];   // port_out[MAR] <= ACC
+    wire C26 = micro_instr[26];   // MBR <= port_in[MAR]
 
     // Memory phase: CAR in range 0x00-0x0F means fetch cycle
     wire is_fetch = (car[7:4] == 4'h0);
+
 
     // -------------------------------------------------------
     // ALU
@@ -235,13 +250,14 @@ module CPU_top (
     // -------------------------------------------------------
     always @(posedge clk or posedge internal_reset) begin
         if (internal_reset) begin
-            MAR <= 8'h00;
-            MBR <= 16'h0000;
-            PC  <= 8'h00;
-            IR  <= 8'h00;
-            BR  <= 16'h0000;
-            ACC <= 16'h0000;
-            MR  <= 16'h0000;
+            MAR       <= 8'h00;
+            MBR       <= 16'h0000;
+            PC        <= 8'h00;
+            IR        <= 8'h00;
+            BR        <= 16'h0000;
+            ACC       <= 16'h0000;
+            MR        <= 16'h0000;
+            port_out  <= 64'h0;
         end else begin
 
             // ---- MAR updates ----
@@ -250,10 +266,11 @@ module CPU_top (
             else if (C5)  MAR <= MBR[7:0];
 
             // ---- MBR updates ----
-            // C3 and C11 never assert in the same micro-cycle.
-            if      (C3 && is_fetch) MBR <= im_dout;   // fetch: read IM
-            else if (C3)             MBR <= dm_dout;   // execute: read DM
-            else if (C11)            MBR <= ACC;       // STORE: capture ACC
+            // C3, C11, C26 never assert in the same micro-cycle.
+            if      (C3 && is_fetch) MBR <= im_dout;     // fetch: read IM
+            else if (C3)             MBR <= dm_dout;     // execute: read DM
+            else if (C11)            MBR <= ACC;         // STORE: capture ACC
+            else if (C26)            MBR <= port_in[MAR[1:0]]; // IN: read port
 
             // ---- IR update ----
             if (C4) IR <= MBR[15:8];
@@ -270,15 +287,20 @@ module CPU_top (
             if (C7) BR <= MBR;
 
             // ---- ACC updates ----
-            // ACC reset (C8) is independent; arithmetic ops use ALU.
+            // C8 (clear), C24 (LOADI), and ALU ops are mutually exclusive.
             if (C8) begin
                 ACC <= 16'h0000;
+            end else if (C24) begin
+                ACC <= {{8{MAR[7]}}, MAR};   // LOADI: sign-extend 8-bit immediate
             end else if (C9 | C13 | C14 | C15 | C16 | C17 | C18 | C19 | C20) begin
                 ACC <= alu_result;
             end
 
             // ---- MR update (multiply high word) ----
             if (C19) MR <= alu_mr;
+
+            // ---- Output port write (C25: OUT [port]) ----
+            if (C25) port_out[MAR[1:0]] <= ACC;
 
         end
     end
@@ -307,6 +329,9 @@ module CPU_top (
                 8'h0C: ir_str = "NOT   ";
                 8'h0D: ir_str = "SHIFTR";
                 8'h0E: ir_str = "SHIFTL";
+                8'h09: ir_str = "LOADI ";
+                8'h0F: ir_str = "OUT   ";
+                8'h10: ir_str = "IN    ";
                 default: ir_str = "???   ";
             endcase
          end
