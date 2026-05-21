@@ -90,7 +90,10 @@ module CPU_top (
     output reg  [3:0][15:0] port_out,      // output ports [0..3] → peripherals
     input  wire [3:0][15:0] port_in,       // input  ports [0..3] ← peripherals
     // packed debug bus: {halted,CAR,MR,ACC,BR,IR,PC,MBR,MAR}
-    output wire [96:0] video_bus
+    output wire [96:0] video_bus,
+    // single-step debug controls (from ALL_top / switches+button)
+    input  wire [1:0]  exec_mode,          // 00=run 01=instr-step 10=micro-step
+    input  wire        step_pulse          // single-cycle trigger from BTNC
 );
     wire clks=~clk;
     // -------------------------------------------------------
@@ -131,7 +134,9 @@ module CPU_top (
         .micro_instr(micro_instr),
         .mbr_high   (MBR[15:8]),   // opcode used for dispatch (C1)
         .car        (car),
-        .halted     (halted)
+        .halted     (halted),
+        .exec_mode  (exec_mode),
+        .step_pulse (step_pulse)
     );
 
     // -------------------------------------------------------
