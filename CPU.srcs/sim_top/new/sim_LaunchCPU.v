@@ -1,26 +1,32 @@
 // ============================================================
 // sim_LaunchCPU.v
-// Testbench: launch ALL_top in free-run mode (SW[15:14]=00)
+// Testbench: single-instruction step mode (SW[15:14]=01)
 //
-// Drives:
-//   clk       – 100 MHz (10 ns period)
-//   reset_btn – LOW for 200 ns (→ reset=HIGH active), then HIGH
-//   sw        – 16'h0000 (exec_mode=00: free-run, IN[0]=0)
-//   btn_step  – 0 (not pressed)
+// exec_mode=2'b01: CPU pauses at each instruction boundary and
+// waits for a step_pulse before executing the next instruction.
 //
-// Simulation stops automatically when halted is asserted.
+// In simulation the btn_debounce timer (~10.5 ms) is bypassed:
+// force/release directly drives dut.step_pulse for one 100 MHz
+// clock cycle, which is what the hardware button would produce
+// after debounce.
+//
+// Signal hierarchy used:
+//   dut.step_pulse          – ALL_top internal wire (forced here)
+//   dut.cpu.cu.instr_running – ControlUnit reg: 1 while executing
+//   dut.cpu.internal_reset  – CPU_top wire: BRAM init guard
+//   dut.halted              – CPU_top output
 // ============================================================
 `timescale 1ns / 1ps
 
 module sim_LaunchCPU;
 
-    // ---- stimulus signals ----
+    // ---- stimulus ----
     reg        clk;
-    reg        reset_btn;  // CPU_RESETN: 0=reset active, 1=running
+    reg        reset_btn;
     reg [15:0] sw;
     reg        btn_step;
 
-    // ---- DUT outputs (observed in waveform) ----
+    // ---- DUT outputs ----
     wire [7:0] AN;
     wire [6:0] SEG;
     wire       vga_hs, vga_vs;
@@ -45,24 +51,66 @@ module sim_LaunchCPU;
     initial clk = 0;
     always #5 clk = ~clk;
 
-    // ---- reset then release ----
+    // ---- convenience aliases ----
+    wire halted        = dut.halted;
+    wire instr_running = dut.cpu.cu.instr_running;
+
+    // ---- task: execute exactly one instruction ----
+    // Injects a single-cycle step_pulse (bypassing btn_debounce),
+    // then waits until the instruction boundary is reached again.
+    // Handles HALT by also watching posedge halted.
+    task step_one_instr;
+        begin
+            // Force step_pulse high for one 100 MHz cycle.
+            // The ControlUnit samples it on the next negedge clk.
+            @(posedge clk); #1;
+            force dut.step_pulse = 1'b1;
+            @(posedge clk); #1;
+            force dut.step_pulse = 1'b0;
+            release dut.step_pulse;
+
+            // Wait for ControlUnit to arm (instr_running rises)
+            // or for HALT to assert immediately (unlikely but safe)
+            @(posedge instr_running or posedge halted);
+
+            // Wait for instruction to finish (instr_running falls)
+            // HALT never fires C2, so also exit on posedge halted
+            if (!halted)
+                @(negedge instr_running or posedge halted);
+
+            // Let the final posedge register updates settle
+            repeat(2) @(posedge clk);
+        end
+    endtask
+
+    // ---- main stimulus ----
     initial begin
-        reset_btn = 1'b0;  // assert reset (reset = ~reset_btn = 1)
-        sw        = 16'h0000;  // free-run, IN[0]=0
+        reset_btn = 1'b0;     // assert reset  (reset = ~reset_btn = 1)
+        sw        = 16'h4000; // exec_mode = 2'b01 (single-instr step)
+                              // sw[15]=0, sw[14]=1 → exec_mode[1:0]=01
         btn_step  = 1'b0;
 
         #200;
-        reset_btn = 1'b1;  // release reset, CPU starts
-    end
+        reset_btn = 1'b1;     // release reset
 
-    // ---- stop when CPU halts ----
-    wire halted = dut.halted;
-    always @(posedge halted) begin
-        #100;  // let the last few signals settle
+        // Wait until BRAM init guard clears
+        @(negedge dut.cpu.internal_reset);
+        repeat(4) @(posedge clk);
+
+        // Step through the program one instruction at a time
+        while (!halted)
+            step_one_instr();
+
+        #100;
+        $display("=== CPU halted after single-step run. ===");
         $finish;
     end
 
-    // ---- safety timeout: 10 ms ----
-    initial #10_000_000 $finish;
+    // ---- safety timeout: 1 ms ----
+    initial begin
+        #1_000_000;
+        $display("=== Timeout: simulation did not halt. ===");
+        $finish;
+    end
 
 endmodule
