@@ -32,7 +32,7 @@ module ALL_top (
     wire reset = ~reset_btn;
     wire halted;
     wire [3:0][15:0] port_out;
-    wire [96:0] video_bus;
+    wire [128:0] video_bus;
     wire        capture_pulse;
     wire [7:0]  snap_car;
 

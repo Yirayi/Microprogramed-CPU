@@ -89,8 +89,8 @@ module CPU_top (
     output wire        halted,              // asserted when HALT instruction executes
     output reg  [3:0][15:0] port_out,      // output ports [0..3] → peripherals
     input  wire [3:0][15:0] port_in,       // input  ports [0..3] ← peripherals
-    // packed debug bus: {halted,CAR,MR,ACC,BR,IR,PC,MBR,MAR}
-    output wire [96:0] video_bus,
+    // packed debug bus: {micro_instr[128:97],halted[96],CAR[95:88],MR[87:72],ACC[71:56],BR[55:40],IR[39:32],PC[31:24],MBR[23:8],MAR[7:0]}
+    output wire [128:0] video_bus,
     // single-step debug controls (from ALL_top / switches+button)
     input  wire [1:0]  exec_mode,          // 00=run 01=instr-step 10=micro-step
     input  wire        step_pulse,         // single-cycle trigger from BTNC
@@ -377,8 +377,8 @@ module CPU_top (
     end
     // synthesis translate_on
 
-    // video_bus: {halted[96], car[95:88], MR[87:72], ACC[71:56], BR[55:40],
-    //             IR[39:32], PC[31:24], MBR[23:8], MAR[7:0]}
-    assign video_bus = {halted, car, MR, ACC, BR, IR, PC, MBR, MAR};
+    // video_bus: {micro_instr[128:97], halted[96], car[95:88], MR[87:72],
+    //             ACC[71:56], BR[55:40], IR[39:32], PC[31:24], MBR[23:8], MAR[7:0]}
+    assign video_bus = {micro_instr, halted, car, MR, ACC, BR, IR, PC, MBR, MAR};
 
 endmodule
