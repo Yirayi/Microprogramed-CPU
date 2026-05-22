@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="sim_LaunchCPU_behav.wdb" id="1">
+         <top_modules>
+            <top_module name="glbl" />
+            <top_module name="sim_LaunchCPU" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <zoom_setting>
+      <ZoomStartTime time="636.510 ns"></ZoomStartTime>
+      <ZoomEndTime time="1,006.911 ns"></ZoomEndTime>
+      <Cursor1Time time="301.190 ns"></Cursor1Time>
+   </zoom_setting>
+   <column_width_setting>
+      <NameColumnWidth column_width="342"></NameColumnWidth>
+      <ValueColumnWidth column_width="221"></ValueColumnWidth>
+   </column_width_setting>
+   <WVObjectSize size="9" />
+   <wvobject fp_name="group14" type="group">
+      <obj_property name="label">ExtCtrl</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+      <wvobject fp_name="/sim_LaunchCPU/btn_step" type="logic">
+         <obj_property name="ElementShortName">btn_step</obj_property>
+         <obj_property name="ObjectShortName">btn_step</obj_property>
+         <obj_property name="CustomSignalColor">#FFFFFF</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/sim_LaunchCPU/clk" type="logic">
+         <obj_property name="ElementShortName">clk</obj_property>
+         <obj_property name="ObjectShortName">clk</obj_property>
+         <obj_property name="CustomSignalColor">#FFFFFF</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/sim_LaunchCPU/reset_btn" type="logic">
+         <obj_property name="ElementShortName">reset_btn</obj_property>
+         <obj_property name="ObjectShortName">reset_btn</obj_property>
+         <obj_property name="CustomSignalColor">#FFFFFF</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/sim_LaunchCPU/dut/cpu/internal_reset" type="logic">
+         <obj_property name="ElementShortName">internal_reset</obj_property>
+         <obj_property name="ObjectShortName">internal_reset</obj_property>
+      </wvobject>
+      <wvobject fp_name="/sim_LaunchCPU/sw" type="array">
+         <obj_property name="ElementShortName">sw[15:0]</obj_property>
+         <obj_property name="ObjectShortName">sw[15:0]</obj_property>
+         <obj_property name="CustomSignalColor">#FFFFFF</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/sim_LaunchCPU/halted" type="logic">
+         <obj_property name="ElementShortName">halted</obj_property>
+         <obj_property name="ObjectShortName">halted</obj_property>
+         <obj_property name="CustomSignalColor">#FFFFFF</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/sim_LaunchCPU/dut/exec_mode" type="array">
+         <obj_property name="ElementShortName">exec_mode[1:0]</obj_property>
+         <obj_property name="ObjectShortName">exec_mode[1:0]</obj_property>
+         <obj_property name="CustomSignalColor">#FFFFFF</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject fp_name="group19" type="group">
+      <obj_property name="label">CU</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+      <wvobject fp_name="/sim_LaunchCPU/dut/cpu/cu/cu_command" type="array">
+         <obj_property name="ElementShortName">cu_command[127:0]</obj_property>
+         <obj_property name="ObjectShortName">cu_command[127:0]</obj_property>
+         <obj_property name="Radix">ASCIIRADIX</obj_property>
+      </wvobject>
+      <wvobject fp_name="/sim_LaunchCPU/dut/cpu/cu/step_pulse" type="logic">
+         <obj_property name="ElementShortName">step_pulse</obj_property>
+         <obj_property name="ObjectShortName">step_pulse</obj_property>
+      </wvobject>
+      <wvobject fp_name="/sim_LaunchCPU/dut/cpu/cu/cu_phase" type="array">
+         <obj_property name="ElementShortName">cu_phase[63:0]</obj_property>
+         <obj_property name="ObjectShortName">cu_phase[63:0]</obj_property>
+         <obj_property name="Radix">ASCIIRADIX</obj_property>
+      </wvobject>
+      <wvobject fp_name="/sim_LaunchCPU/dut/cpu/cu/micro_instr" type="array">
+         <obj_property name="ElementShortName">micro_instr[31:0]</obj_property>
+         <obj_property name="ObjectShortName">micro_instr[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/sim_LaunchCPU/dut/cpu/cu/can_step" type="logic">
+         <obj_property name="ElementShortName">can_step</obj_property>
+         <obj_property name="ObjectShortName">can_step</obj_property>
+      </wvobject>
+      <wvobject fp_name="/sim_LaunchCPU/dut/cpu/cu/car" type="array">
+         <obj_property name="ElementShortName">car[7:0]</obj_property>
+         <obj_property name="ObjectShortName">car[7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/sim_LaunchCPU/dut/cpu/cu/instr_running" type="logic">
+         <obj_property name="ElementShortName">instr_running</obj_property>
+         <obj_property name="ObjectShortName">instr_running</obj_property>
+      </wvobject>
+      <wvobject fp_name="/sim_LaunchCPU/dut/cpu/cu/capture_pulse" type="logic">
+         <obj_property name="ElementShortName">capture_pulse</obj_property>
+         <obj_property name="ObjectShortName">capture_pulse</obj_property>
+      </wvobject>
+      <wvobject fp_name="/sim_LaunchCPU/dut/cpu/cu/snap_car" type="array">
+         <obj_property name="ElementShortName">snap_car[7:0]</obj_property>
+         <obj_property name="ObjectShortName">snap_car[7:0]</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject fp_name="/sim_LaunchCPU/dut/cpu/PC" type="array">
+      <obj_property name="ElementShortName">PC[7:0]</obj_property>
+      <obj_property name="ObjectShortName">PC[7:0]</obj_property>
+      <obj_property name="CustomSignalColor">#FFD700</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_LaunchCPU/dut/cpu/ir_str" type="array">
+      <obj_property name="ElementShortName">ir_str[47:0]</obj_property>
+      <obj_property name="ObjectShortName">ir_str[47:0]</obj_property>
+      <obj_property name="Radix">ASCIIRADIX</obj_property>
+      <obj_property name="CustomSignalColor">#FFD700</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_LaunchCPU/dut/cpu/MAR" type="array">
+      <obj_property name="ElementShortName">MAR[7:0]</obj_property>
+      <obj_property name="ObjectShortName">MAR[7:0]</obj_property>
+      <obj_property name="CustomSignalColor">#FFD700</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_LaunchCPU/dut/cpu/MBR" type="array">
+      <obj_property name="ElementShortName">MBR[15:0]</obj_property>
+      <obj_property name="ObjectShortName">MBR[15:0]</obj_property>
+      <obj_property name="CustomSignalColor">#FFD700</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_LaunchCPU/dut/cpu/BR" type="array">
+      <obj_property name="ElementShortName">BR[15:0]</obj_property>
+      <obj_property name="ObjectShortName">BR[15:0]</obj_property>
+      <obj_property name="CustomSignalColor">#FFD700</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_LaunchCPU/dut/cpu/ACC" type="array">
+      <obj_property name="ElementShortName">ACC[15:0]</obj_property>
+      <obj_property name="ObjectShortName">ACC[15:0]</obj_property>
+      <obj_property name="CustomSignalColor">#FFD700</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_LaunchCPU/dut/seg_disp/value" type="array">
+      <obj_property name="ElementShortName">value[15:0]</obj_property>
+      <obj_property name="ObjectShortName">value[15:0]</obj_property>
+   </wvobject>
+</wave_config>

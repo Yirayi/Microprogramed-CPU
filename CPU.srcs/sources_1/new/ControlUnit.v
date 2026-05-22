@@ -61,7 +61,7 @@ module ControlUnit (
     wire C1  = micro_instr[1];   // CAR <= dispatch(mbr_high)
     wire C2  = micro_instr[2];   // CAR <= 0
     wire C21 = micro_instr[21];  // HALT
-
+    localparam fetch1_micro_instr   = 32'h00000401;
     assign halted = C21;
 
     // ---- Single-step control ----
@@ -97,7 +97,20 @@ module ControlUnit (
             default: dispatch = 8'h00;   // unknown -> restart fetch
         endcase
     endfunction
-
+    always @(posedge clk or posedge reset) begin
+        if (reset) begin
+            instr_running <= 1'b0;
+        end else begin
+      // instr_running state machine (only meaningful in mode 01)
+                if (exec_mode == 2'b01) begin
+                    if (C2 && instr_running)
+                        instr_running <= step_pulse;
+                    else if (!instr_running && step_pulse)
+                        instr_running <= 1'b1;
+                end else
+                    instr_running <= 1'b0;
+        end
+    end
     // ---- CAR update logic (with single-step gating) ----
     // All state in one negedge block so NBA semantics work correctly:
     // can_step reads OLD instr_running, while instr_running is updated
@@ -106,25 +119,14 @@ module ControlUnit (
     always @(negedge clk or posedge reset) begin
         if (reset) begin
             car           <= 8'hFF;
-            instr_running <= 1'b0;
             capture_pulse <= 1'b0;
             snap_car      <= 8'h00;
         end else begin
             capture_pulse <= 1'b0;
-
             // Post-reset: FF→00 (bypasses step gate so startup always occurs)
             if (car == 8'hFF) begin
                 car <= 8'h00;
             end else begin
-                // instr_running state machine (only meaningful in mode 01)
-                if (exec_mode == 2'b01) begin
-                    if (C2 && instr_running)
-                        instr_running <= step_pulse;
-                    else if (!instr_running && step_pulse)
-                        instr_running <= 1'b1;
-                end else
-                    instr_running <= 1'b0;
-
                 // CAR sequencing, gated by can_step and HALT
                 // can_step uses OLD instr_running via NBA semantics
                 if (!C21 && can_step) begin
@@ -132,7 +134,6 @@ module ControlUnit (
                     else if (C1) car <= dispatch(mbr_high);
                     else if (C0) car <= car + 8'h01;
                 end
-
                 // VGA capture (NBA: snap_car latches OLD car before advance)
                 if (exec_mode == 2'b01 && C2 && instr_running) begin
                     capture_pulse <= 1'b1;
