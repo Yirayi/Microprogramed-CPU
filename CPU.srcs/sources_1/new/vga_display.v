@@ -228,21 +228,21 @@ initial begin
     // 'Z' (idx 32)
     fnt[256]=8'h7E; fnt[257]=8'h60; fnt[258]=8'h30; fnt[259]=8'h18;
     fnt[260]=8'h0C; fnt[261]=8'h06; fnt[262]=8'h7E; fnt[263]=8'h00;
-    // '[' (idx 33)
-    fnt[264]=8'h38; fnt[265]=8'h20; fnt[266]=8'h20; fnt[267]=8'h20;
-    fnt[268]=8'h20; fnt[269]=8'h20; fnt[270]=8'h38; fnt[271]=8'h00;
-    // ']' (idx 34)
-    fnt[272]=8'h1C; fnt[273]=8'h04; fnt[274]=8'h04; fnt[275]=8'h04;
-    fnt[276]=8'h04; fnt[277]=8'h04; fnt[278]=8'h1C; fnt[279]=8'h00;
-    // '<' (idx 35)
-    fnt[280]=8'h08; fnt[281]=8'h10; fnt[282]=8'h20; fnt[283]=8'h40;
-    fnt[284]=8'h20; fnt[285]=8'h10; fnt[286]=8'h08; fnt[287]=8'h00;
+    // '[' (idx 33) – LSB-first: bar cols 1-3, body col 1
+    fnt[264]=8'h0E; fnt[265]=8'h02; fnt[266]=8'h02; fnt[267]=8'h02;
+    fnt[268]=8'h02; fnt[269]=8'h02; fnt[270]=8'h0E; fnt[271]=8'h00;
+    // ']' (idx 34) – LSB-first: bar cols 4-6, body col 6
+    fnt[272]=8'h70; fnt[273]=8'h40; fnt[274]=8'h40; fnt[275]=8'h40;
+    fnt[276]=8'h40; fnt[277]=8'h40; fnt[278]=8'h70; fnt[279]=8'h00;
+    // '<' (idx 35) – LSB-first: tip at col 1
+    fnt[280]=8'h10; fnt[281]=8'h08; fnt[282]=8'h04; fnt[283]=8'h02;
+    fnt[284]=8'h04; fnt[285]=8'h08; fnt[286]=8'h10; fnt[287]=8'h00;
     // '=' (idx 36)
     fnt[288]=8'h00; fnt[289]=8'h00; fnt[290]=8'h7E; fnt[291]=8'h00;
     fnt[292]=8'h7E; fnt[293]=8'h00; fnt[294]=8'h00; fnt[295]=8'h00;
-    // '>' (idx 37)
-    fnt[296]=8'h10; fnt[297]=8'h08; fnt[298]=8'h04; fnt[299]=8'h02;
-    fnt[300]=8'h04; fnt[301]=8'h08; fnt[302]=8'h10; fnt[303]=8'h00;
+    // '>' (idx 37) – LSB-first: tip at col 6
+    fnt[296]=8'h08; fnt[297]=8'h10; fnt[298]=8'h20; fnt[299]=8'h40;
+    fnt[300]=8'h20; fnt[301]=8'h10; fnt[302]=8'h08; fnt[303]=8'h00;
     // '+' (idx 38)
     fnt[304]=8'h00; fnt[305]=8'h18; fnt[306]=8'h18; fnt[307]=8'h7E;
     fnt[308]=8'h18; fnt[309]=8'h18; fnt[310]=8'h00; fnt[311]=8'h00;
@@ -381,21 +381,21 @@ always @(*) begin
 end
 
 wire [7:0] fbyte = fnt[{cidx, frow}];
-wire px = in_panel && fbyte[7 - fpx];
+wire px = in_panel && fbyte[fpx];   // bit0=leftmost (LSB-first font convention)
 
 // ============================================================
-// LEFT panel: x=[0,384), y=[0,128), 48 chars × 16 rows
-// History ring buffer: 16 entries
+// LEFT panel: x=[0,560), y=[0,256), 70 chars × 32 rows
+// History ring buffer: 32 entries
 //   type=0: instr-step  {1'b0, v_IR[7:0], v_MAR[7:0]} = 17 bits
 //   type=1: micro-step  {1'b1, snap_car[7:0], 8'h0}
 // ============================================================
 
-// Ring buffer storage (power-on init to all spaces / type=0 / empty)
-reg [16:0] hist [0:15];
-reg  [3:0] hist_head;
+// Ring buffer storage
+reg [16:0] hist [0:31];
+reg  [4:0] hist_head;
 integer    hist_init_i;
 initial begin
-    for (hist_init_i = 0; hist_init_i < 16; hist_init_i = hist_init_i+1)
+    for (hist_init_i = 0; hist_init_i < 32; hist_init_i = hist_init_i+1)
         hist[hist_init_i] = 17'h0;
 end
 
@@ -404,10 +404,9 @@ reg  cap_d1;
 always @(posedge clk or posedge reset) begin
     if (reset) begin
         cap_d1    <= 1'b0;
-        hist_head <= 4'd0;
+        hist_head <= 5'd0;
     end else begin
         cap_d1 <= capture_pulse;
-        // Rising edge of capture_pulse (negedge→posedge transfer, 1-cycle pulse)
         if (capture_pulse && !cap_d1) begin
             if (exec_mode == 2'b01)
                 hist[hist_head] <= {1'b0, v_IR, v_MAR};
@@ -419,18 +418,14 @@ always @(posedge clk or posedge reset) begin
 end
 
 // Rendering signals
-wire in_left  = active && (hc < 10'd384) && (vc < 10'd128);
-wire [8:0] ltx = hc[8:0];          // 0..383
-wire [8:0] lty = vc[8:0];          // 0..127
+wire in_left  = active && (hc < 10'd560) && (vc < 10'd256);
+wire [6:0] lcol  = hc[9:3];   // char column 0..69
+wire [4:0] lrow  = vc[7:3];   // char row    0..31
+wire [2:0] lfpx  = hc[2:0];   // pixel col within char
+wire [2:0] lfrow = vc[2:0];   // pixel row within char
 
-wire [5:0] lcol = ltx[8:3];        // char column 0..47
-wire [3:0] lrow = lty[6:3];        // char row    0..15
-wire [2:0] lfpx = ltx[2:0];        // pixel col within char
-wire [2:0] lfrow= lty[2:0];        // pixel row within char
-
-// Which ring buffer entry corresponds to display row lrow?
-// hist_head points to next-write; oldest = hist_head, newest = hist_head-1
-wire [3:0] bidx = hist_head + {lrow};
+// Ring buffer read: oldest entry at row 0
+wire [4:0] bidx = hist_head + lrow;
 wire [16:0] cur_entry   = hist[bidx];
 wire        cur_type    = cur_entry[16];
 wire [7:0]  cur_ir      = cur_entry[15:8];
@@ -488,7 +483,7 @@ endfunction
 // Returns font index for position pos (0..33) of instruction ir's uop sequence
 function [5:0] uop_char;
     input [7:0] ir;
-    input [5:0] pos;
+    input [6:0] pos;
     // MBR<=DM[MAR] = M B R < = D M [ M A R ]   (12 chars)
     //                0 1 2 3 4 5 6 7 8 9 10 11
     // BR<=MBR      = B R < = M B R             (7 chars, start col 13)
@@ -941,13 +936,13 @@ endfunction
 // Returns char index for column pos (0..47)
 function [5:0] micro_char;
     input [7:0] car;
-    input [5:0] pos;
-    // Micro-op name table: 32 chars starting at pos=9
-    // car_desc[0..31] defined per CAR value
-    reg [5:0] desc [0:31];
+    input [6:0] pos;
+    // Micro-op name table: 62 chars starting at pos=8
+    // car_desc[0..61] defined per CAR value
+    reg [5:0] desc [0:61];
     integer k;
     begin
-        for (k = 0; k < 32; k = k+1) desc[k] = `CSP;
+        for (k = 0; k < 62; k = k+1) desc[k] = `CSP;
         case (car)
             8'h00: begin // MAR<=PC
                 desc[ 0]=`CM; desc[ 1]=`CA; desc[ 2]=`CR;
@@ -958,11 +953,16 @@ function [5:0] micro_char;
                 desc[ 3]=`CLT; desc[ 4]=`CEQ;
                 desc[ 5]=`CI; desc[ 6]=`CM;
                 desc[ 7]=`CLBR; desc[ 8]=`CM; desc[ 9]=`CA; desc[10]=`CR; desc[11]=`CRBR; end
-            8'h02: begin // IR,MAR,PC,DISP
-                desc[ 0]=`CI; desc[ 1]=`CR; desc[ 2]=`CSP;
-                desc[ 3]=`CM; desc[ 4]=`CA; desc[ 5]=`CR; desc[ 6]=`CSP;
-                desc[ 7]=`CP; desc[ 8]=`CC; desc[ 9]=`CSP;
-                desc[10]=`CD; desc[11]=`CI; desc[12]=`CS; desc[13]=`CP; end
+            8'h02: begin // IR<=MBR[H] MAR<=MBR[L] PC<=PC+1 DISP
+                desc[ 0]=`CI; desc[ 1]=`CR; desc[ 2]=`CLT; desc[ 3]=`CEQ;
+                desc[ 4]=`CM; desc[ 5]=`CB; desc[ 6]=`CR;
+                desc[ 7]=`CLBR; desc[ 8]=`CH; desc[ 9]=`CRBR; desc[10]=`CSP;
+                desc[11]=`CM; desc[12]=`CA; desc[13]=`CR; desc[14]=`CLT; desc[15]=`CEQ;
+                desc[16]=`CM; desc[17]=`CB; desc[18]=`CR;
+                desc[19]=`CLBR; desc[20]=`CL; desc[21]=`CRBR; desc[22]=`CSP;
+                desc[23]=`CP; desc[24]=`CC; desc[25]=`CLT; desc[26]=`CEQ;
+                desc[27]=`CP; desc[28]=`CC; desc[29]=`CPLS; desc[30]=`C1; desc[31]=`CSP;
+                desc[32]=`CD; desc[33]=`CI; desc[34]=`CS; desc[35]=`CP; end
             8'h10: begin // MBR<=ACC
                 desc[ 0]=`CM; desc[ 1]=`CB; desc[ 2]=`CR;
                 desc[ 3]=`CLT; desc[ 4]=`CEQ;
@@ -1074,7 +1074,7 @@ function [5:0] micro_char;
             6'd5:  micro_char = `CSP;
             6'd6:  micro_char = `CCOL;
             6'd7:  micro_char = `CSP;
-            default: micro_char = (pos >= 6'd8 && pos <= 6'd39) ? desc[pos - 6'd8] : `CSP;
+            default: micro_char = (pos >= 7'd8 && pos <= 7'd69) ? desc[pos - 7'd8] : `CSP;
         endcase
     end
 endfunction
@@ -1083,7 +1083,7 @@ endfunction
 function [5:0] instr_char;
     input [7:0] ir;
     input [7:0] operand;
-    input [5:0] col;
+    input [6:0] col;
     begin
         instr_char = `CSP;
         if (col <= 6'd5) begin
@@ -1122,13 +1122,13 @@ always @(*) begin
 end
 
 wire [7:0] l_fbyte = fnt[{l_cidx, lfrow}];
-wire l_px = in_left && l_fbyte[7 - lfpx];
+wire l_px = in_left && l_fbyte[lfpx];
 
 // ============================================================
 // Separators
 // ============================================================
 // Left panel right edge: x=384..385
-wire sep_l = active && (hc >= 10'd384) && (hc < 10'd386);
+wire sep_l = active && (hc >= 10'd560) && (hc < 10'd562);
 // Right panel left edge: x=566..567
 wire sep_r = active && (hc >= 10'd566) && (hc < 10'd568);
 
