@@ -47,7 +47,13 @@ module ControlUnit (
     input  wire [31:0] micro_instr,   // current microinstruction from CM
     input  wire [7:0]  mbr_high,      // MBR[15:8] – opcode for dispatch
     output reg  [7:0]  car,           // Control Address Register
-    output wire        halted         // asserted when HALT microop active
+    output wire        halted,        // asserted when HALT microop active
+    input  wire [1:0]  exec_mode,     // 00=run, 01=instr-step, 10=micro-step
+    input  wire        step_pulse,    // single-cycle step trigger from BTNC
+    output wire        can_step,      // step gate: tell CPU_top whether to execute
+    // VGA history capture
+    output reg         capture_pulse, // 1-cycle negedge pulse → push ring buffer
+    output reg  [7:0]  snap_car       // CAR latched before advance (micro-step)
 );
 
     // ---- Extract sequencing control bits ----
@@ -55,8 +61,18 @@ module ControlUnit (
     wire C1  = micro_instr[1];   // CAR <= dispatch(mbr_high)
     wire C2  = micro_instr[2];   // CAR <= 0
     wire C21 = micro_instr[21];  // HALT
-
+    localparam fetch1_micro_instr   = 32'h00000401;
     assign halted = C21;
+
+    // ---- Single-step control ----
+    // instr_running: set when step_pulse fires in instr-step mode,
+    //               cleared when C2 fires (instruction boundary reached)
+    reg instr_running;
+
+    assign can_step =
+        (exec_mode == 2'b00) ||                                // free-run
+        (exec_mode == 2'b01 && (instr_running || step_pulse)) || // instr-step
+        (exec_mode == 2'b10 && step_pulse);                    // micro-step
 
     // ---- Dispatch function: opcode -> CAR start address ----
     function [7:0] dispatch;
@@ -81,26 +97,52 @@ module ControlUnit (
             default: dispatch = 8'h00;   // unknown -> restart fetch
         endcase
     endfunction
-
-    // ---- CAR update logic ----
+    always @(posedge clk or posedge reset) begin
+        if (reset) begin
+            instr_running <= 1'b0;
+        end else begin
+      // instr_running state machine (only meaningful in mode 01)
+                if (exec_mode == 2'b01) begin
+                    if (C2 && instr_running)
+                        instr_running <= step_pulse;
+                    else if (!instr_running && step_pulse)
+                        instr_running <= 1'b1;
+                end else
+                    instr_running <= 1'b0;
+        end
+    end
+    // ---- CAR update logic (with single-step gating) ----
+    // All state in one negedge block so NBA semantics work correctly:
+    // can_step reads OLD instr_running, while instr_running is updated
+    // simultaneously.  Splitting across posedge/negedge would clear
+    // instr_running before the negedge could use it for the C2 transition.
     always @(negedge clk or posedge reset) begin
         if (reset) begin
-            car <= 8'hFF;
-        end
-        else begin
-            if(!reset && car ==8'hFF ) car <= 8'h00;
-            if (!C21) begin
-                // Priority: C2 > C1 > C0
-                if (C2)         // CAR <= 0
-                    car <= 8'h00;
-                else if (C1)    // CAR <= dispatch(mbr_high)
-                    car <= dispatch(mbr_high);
-                else if (C0)    // CAR <= CAR+1
-                    car <= car + 8'h01;
-                // else: no sequencing bits -> stay (should not happen except HALT)
+            car           <= 8'hFF;
+            capture_pulse <= 1'b0;
+            snap_car      <= 8'h00;
+        end else begin
+            capture_pulse <= 1'b0;
+            // Post-reset: FF→00 (bypasses step gate so startup always occurs)
+            if (car == 8'hFF) begin
+                car <= 8'h00;
+            end else begin
+                // CAR sequencing, gated by can_step and HALT
+                // can_step uses OLD instr_running via NBA semantics
+                if (!C21 && can_step) begin
+                    if      (C2) car <= 8'h00;
+                    else if (C1) car <= dispatch(mbr_high);
+                    else if (C0) car <= car + 8'h01;
+                end
+                // VGA capture (NBA: snap_car latches OLD car before advance)
+                if (exec_mode == 2'b01 && C2 && instr_running) begin
+                    capture_pulse <= 1'b1;
+                end else if (exec_mode == 2'b10 && step_pulse && can_step) begin
+                    capture_pulse <= 1'b1;
+                    snap_car      <= car;
+                end
             end
-            // C21 asserted: CAR freezes (CPU halted)
-          end
+        end
     end
 
 
