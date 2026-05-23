@@ -6,7 +6,7 @@
 //   clk        – 100 MHz board clock
 //   reset_btn  – CPU_RESETN (C12, active-low push-button)
 //   sw[15:0]   – slide switches
-//     sw[7:0]  : port IN[0] data (sign-extended 8-bit)
+//     sw[11:0] : port IN[0] data (sign-extended 12-bit)
 //     sw[15:14]: exec_mode  00=run 01=instr-step 10=micro-step
 //   btn_step   – BTNC (N17), single-step advance in step modes
 //   AN[7:0]    – 7-segment anode,  active-low
@@ -32,9 +32,12 @@ module ALL_top (
     wire reset = ~reset_btn;
     wire halted;
     wire [3:0][15:0] port_out;
-    wire [96:0] video_bus;
+    wire [208:0] video_bus;
     wire        capture_pulse;
     wire [7:0]  snap_car;
+    wire        scan_done, scan_wr_en;
+    wire [7:0]  scan_wr_addr, scan_count;
+    wire [15:0] scan_wr_data;
 
     // ---- SW 2-stage synchronizer (metastability) ----
     (* ASYNC_REG = "TRUE" *) reg [15:0] sw_s1, sw_s2;
@@ -44,8 +47,8 @@ module ALL_top (
     end
 
     wire [1:0]  exec_mode = sw_s2[15:14];
-    // port_in[0]: SW[7:0] sign-extended to 16 bits
-    wire [15:0] sw_port0 = {{8{sw_s2[7]}}, sw_s2[7:0]};
+    // port_in[0]: SW[11:0] sign-extended to 16 bits (12-bit signed input)
+    wire [15:0] sw_port0 = {{4{sw_s2[11]}}, sw_s2[11:0]};
 
     // ---- BTNC debounce + edge detect ----
     wire step_pulse;
@@ -59,7 +62,7 @@ module ALL_top (
 
     // ---- port_in wiring ----
     wire [3:0][15:0] port_in;
-    assign port_in[0] = sw_port0;  // SW[7:0], sign-extended
+    assign port_in[0] = sw_port0;  // SW[11:0], 12-bit signed, sign-extended to 16
     assign port_in[1] = 16'h0;
     assign port_in[2] = 16'h0;
     assign port_in[3] = 16'h0;
@@ -74,7 +77,12 @@ module ALL_top (
         .exec_mode    (exec_mode),
         .step_pulse   (step_pulse),
         .capture_pulse(capture_pulse),
-        .snap_car     (snap_car)
+        .snap_car     (snap_car),
+        .scan_done    (scan_done),
+        .scan_wr_en   (scan_wr_en),
+        .scan_wr_addr (scan_wr_addr),
+        .scan_wr_data (scan_wr_data),
+        .scan_count   (scan_count)
     );
 
     seven_seg_decimal seg_disp (
@@ -92,6 +100,11 @@ module ALL_top (
         .exec_mode    (exec_mode),
         .capture_pulse(capture_pulse),
         .snap_car     (snap_car),
+        .scan_done    (scan_done),
+        .scan_wr_en   (scan_wr_en),
+        .scan_wr_addr (scan_wr_addr),
+        .scan_wr_data (scan_wr_data),
+        .scan_count   (scan_count),
         .vga_hs       (vga_hs),
         .vga_vs       (vga_vs),
         .vga_r        (vga_r),

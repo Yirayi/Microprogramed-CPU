@@ -1,0 +1,67 @@
+; Instruction Memory initialization
+; Program: 1sumtoX  —  compute sum = 1+2+3+...+x
+;
+; x is read from port_in[0] = SW[11:0] (12-bit signed).
+; Result is written to port_out[0] (7-segment display).
+;
+; DM layout:
+;   DM[A1] = 0x0001  constant 1 (pre-loaded in DMData.coe)
+;   DM[A2]           sum  variable (initialised to 0 at runtime)
+;   DM[A3]           temp variable (initialised to x  at runtime)
+;
+; Guard: x < 0 -> output 0, HALT
+; Loop : sum += temp; temp--; repeat while temp >= 0
+;        (one harmless extra iteration when temp=0 adds 0 to sum)
+;
+memory_initialization_radix=16;
+memory_initialization_vector=
+; PC=0x00: IN 00         ACC = port_in[0] = x
+1000,
+; PC=0x01: STORE A3      temp = x
+01A3,
+; PC=0x02: LOADI 00      ACC = 0
+0900,
+; PC=0x03: STORE A2      sum = 0
+01A2,
+; PC=0x04: LOAD A3       ACC = x  (guard check)
+02A3,
+; PC=0x05: JMPGEZ 07     if x >= 0: enter loop at PC=07
+0507,
+; PC=0x06: JMP 0D        x < 0: jump to exit at PC=0D
+060D,
+; PC=0x07: LOAD A2       [loop] ACC = sum
+02A2,
+; PC=0x08: ADD A3        ACC = sum + temp
+03A3,
+; PC=0x09: STORE A2      sum = sum + temp
+01A2,
+; PC=0x0A: LOAD A3       ACC = temp
+02A3,
+; PC=0x0B: SUB A1        ACC = temp-1 (= new_temp)
+04A1,
+; PC=0x0C: STORE A3      temp = new_temp
+01A3,
+; PC=0x0D: JMPGEZ 07     new_temp>=0: loop;  x<0 landing: fall
+0507,
+; PC=0x0E: LOAD A2       [output] ACC = sum
+02A2,
+; PC=0x0F: OUT 00        port_out[0] = sum -> 7-seg
+0F00,
+; PC=0x10: HALT        
+0700,
+; 0x11-0xFF: unused (239 entries)
+0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000,
+0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000,
+0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000,
+0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000,
+0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000,
+0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000,
+0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000,
+0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000,
+0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000,
+0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000,
+0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000,
+0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000,
+0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000,
+0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000,
+0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000;

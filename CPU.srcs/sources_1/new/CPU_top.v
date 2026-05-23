@@ -89,14 +89,20 @@ module CPU_top (
     output wire        halted,              // asserted when HALT instruction executes
     output reg  [3:0][15:0] port_out,      // output ports [0..3] → peripherals
     input  wire [3:0][15:0] port_in,       // input  ports [0..3] ← peripherals
-    // packed debug bus: {halted,CAR,MR,ACC,BR,IR,PC,MBR,MAR}
-    output wire [96:0] video_bus,
+    // packed debug bus: {micro_instr[128:97],halted[96],CAR[95:88],MR[87:72],ACC[71:56],BR[55:40],IR[39:32],PC[31:24],MBR[23:8],MAR[7:0]}
+    output wire [208:0] video_bus,
     // single-step debug controls (from ALL_top / switches+button)
     input  wire [1:0]  exec_mode,          // 00=run 01=instr-step 10=micro-step
     input  wire        step_pulse,         // single-cycle trigger from BTNC
     // VGA history capture signals
     output wire        capture_pulse,      // 1-cycle pulse: push to VGA ring buffer
-    output wire [7:0]  snap_car            // pre-advance CAR for micro-step display
+    output wire [7:0]  snap_car,           // pre-advance CAR for micro-step display
+    // Instruction scan output (sent to vga_display for static listing)
+    output reg         scan_done,          // scan complete; CPU execution released
+    output reg         scan_wr_en,         // 1-cycle write strobe
+    output reg  [7:0]  scan_wr_addr,       // write address (= PC index)
+    output reg  [15:0] scan_wr_data,       // instruction word {opcode, operand}
+    output wire [7:0]  scan_count          // = scan_addr+1 when done (wire, no extra reg)
 );
     wire clks=~clk;
     // -------------------------------------------------------
@@ -124,6 +130,8 @@ module CPU_top (
     wire dm_rsta_busy;
     wire dm_rstb_busy;
     wire internal_reset = reset | cm_rsta_busy | im_rsta_busy|dm_rsta_busy|dm_rstb_busy;
+    // Hold CPU in reset while instruction scan is running
+    wire cpu_reset = internal_reset | !scan_done;
 
     // -------------------------------------------------------
     // Control Unit
@@ -133,7 +141,7 @@ module CPU_top (
     wire can_step;
     ControlUnit cu (
         .clk          (clk),
-        .reset        (internal_reset),
+        .reset        (cpu_reset),
         .micro_instr  (micro_instr),
         .mbr_high     (MBR[15:8]),   // opcode used for dispatch (C1)
         .car          (car),
@@ -161,10 +169,58 @@ module CPU_top (
     // -------------------------------------------------------
     wire [15:0] im_dout;
 
+    // -------------------------------------------------------
+    // Instruction scan FSM
+    // Runs once after BRAMs are ready; holds CPU in reset via cpu_reset.
+    // 3-cycle per address: SCAN_A (addr stable) → SCAN_B (wait) → SCAN_C (read/store)
+    // IM uses clka=~clk; addr latched at clka posedge (= clk negedge);
+    // registered output available 1 clka cycle later, valid at posedge clk+2.
+    // -------------------------------------------------------
+    localparam SC_IDLE = 2'd0, SC_A = 2'd1, SC_B = 2'd2, SC_C = 2'd3;
+    reg [1:0] scan_state;
+    reg [7:0] scan_addr;
+
+    always @(posedge clk or posedge reset) begin
+        if (reset) begin
+            scan_state   <= SC_IDLE;
+            scan_addr    <= 8'd0;
+            scan_done    <= 1'b0;
+            scan_wr_en   <= 1'b0;
+            scan_wr_addr <= 8'd0;
+            scan_wr_data <= 16'd0;
+        end else begin
+            scan_wr_en <= 1'b0;  // default: no write
+            case (scan_state)
+                // Guard !scan_done: once done, stay idle forever (prevents re-run)
+                SC_IDLE: if (!internal_reset && !scan_done) scan_state <= SC_A;
+                SC_A:    scan_state <= SC_B;
+                SC_B:    scan_state <= SC_C;
+                SC_C: begin
+                    // im_dout now valid for current scan_addr
+                    scan_wr_en   <= 1'b1;
+                    scan_wr_addr <= scan_addr;        // NBA: old value before increment
+                    scan_wr_data <= im_dout;
+                    if (im_dout[15:8] == 8'h07 || scan_addr == 8'hFF) begin
+                        scan_done  <= 1'b1;
+                        scan_state <= SC_IDLE;        // stay idle; scan_addr frozen here
+                    end else begin
+                        scan_addr  <= scan_addr + 8'd1;
+                        scan_state <= SC_A;
+                    end
+                end
+                default: scan_state <= SC_IDLE;
+            endcase
+        end
+    end
+
+    wire scan_busy = !scan_done;
+    // scan_addr is frozen at the HALT index once scan_done; count = index+1
+    assign scan_count = scan_addr + 8'd1;
+
     InstructionMemory im (
         .clka      (clks),
         .rsta      (reset),
-        .addra     (MAR),
+        .addra     (scan_busy ? scan_addr : MAR),  // mux: scan or normal fetch
         .douta     (im_dout),
         .rsta_busy (im_rsta_busy)
     );
@@ -266,8 +322,8 @@ module CPU_top (
     // -------------------------------------------------------
     // Register update: all registers clocked on posedge
     // -------------------------------------------------------
-    always @(posedge clk or posedge internal_reset) begin
-        if (internal_reset) begin
+    always @(posedge clk or posedge cpu_reset) begin
+        if (cpu_reset) begin
             MAR       <= 8'h00;
             MBR       <= 16'h0000;
             PC        <= 8'h00;
@@ -377,8 +433,13 @@ module CPU_top (
     end
     // synthesis translate_on
 
-    // video_bus: {halted[96], car[95:88], MR[87:72], ACC[71:56], BR[55:40],
-    //             IR[39:32], PC[31:24], MBR[23:8], MAR[7:0]}
-    assign video_bus = {halted, car, MR, ACC, BR, IR, PC, MBR, MAR};
+    // video_bus packing (MSB first):
+    //   [208:193] port_out[3]   [192:177] port_out[2]  [176:161] port_out[1]
+    //   [160:145] port_out[0]   [144:129] port_in[0]
+    //   [128:97]  micro_instr   [96]      halted        [95:88]   car
+    //   [87:72]   MR            [71:56]   ACC           [55:40]   BR
+    //   [39:32]   IR            [31:24]   PC            [23:8]    MBR      [7:0] MAR
+    assign video_bus = {port_out[3], port_out[2], port_out[1], port_out[0],
+                        port_in[0], micro_instr, halted, car, MR, ACC, BR, IR, PC, MBR, MAR};
 
 endmodule
