@@ -102,7 +102,7 @@ module CPU_top (
     output reg         scan_wr_en,         // 1-cycle write strobe
     output reg  [7:0]  scan_wr_addr,       // write address (= PC index)
     output reg  [15:0] scan_wr_data,       // instruction word {opcode, operand}
-    output reg  [7:0]  scan_count          // total instructions scanned (incl. HALT)
+    output wire [7:0]  scan_count          // = scan_addr+1 when done (wire, no extra reg)
 );
     wire clks=~clk;
     // -------------------------------------------------------
@@ -188,11 +188,11 @@ module CPU_top (
             scan_wr_en   <= 1'b0;
             scan_wr_addr <= 8'd0;
             scan_wr_data <= 16'd0;
-            scan_count   <= 8'd0;
         end else begin
             scan_wr_en <= 1'b0;  // default: no write
             case (scan_state)
-                SC_IDLE: if (!internal_reset) scan_state <= SC_A;
+                // Guard !scan_done: once done, stay idle forever (prevents re-run)
+                SC_IDLE: if (!internal_reset && !scan_done) scan_state <= SC_A;
                 SC_A:    scan_state <= SC_B;
                 SC_B:    scan_state <= SC_C;
                 SC_C: begin
@@ -201,9 +201,8 @@ module CPU_top (
                     scan_wr_addr <= scan_addr;        // NBA: old value before increment
                     scan_wr_data <= im_dout;
                     if (im_dout[15:8] == 8'h07 || scan_addr == 8'hFF) begin
-                        scan_count <= scan_addr + 8'd1;
                         scan_done  <= 1'b1;
-                        scan_state <= SC_IDLE;        // stay idle
+                        scan_state <= SC_IDLE;        // stay idle; scan_addr frozen here
                     end else begin
                         scan_addr  <= scan_addr + 8'd1;
                         scan_state <= SC_A;
@@ -215,6 +214,8 @@ module CPU_top (
     end
 
     wire scan_busy = !scan_done;
+    // scan_addr is frozen at the HALT index once scan_done; count = index+1
+    assign scan_count = scan_addr + 8'd1;
 
     InstructionMemory im (
         .clka      (clks),
