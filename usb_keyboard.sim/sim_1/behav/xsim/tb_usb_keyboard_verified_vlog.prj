@@ -1,0 +1,11 @@
+# compile verilog/system verilog design source files
+verilog xil_defaultlib  \
+"../../../../usb_keyboard.srcs/sources_1/new/ps2_transmitter.v" \
+"../../../../usb_keyboard.srcs/sources_1/new/usb_keyboard.v" \
+"../../../../usb_keyboard.srcs/sim_1/new/tb_usb_keyboard.v" \
+
+# compile glbl module
+verilog xil_defaultlib "glbl.v"
+
+# Do not sort compile order
+nosort

@@ -1,0 +1,16 @@
+Time resolution is 1 ps
+
+--- Testing Keystroke 0x1c -> expecting 'a' ---
+[ERROR] Press failed. Got: ''
+[INFO] Releasing key...
+[OK] Release correctly ignored by UART.
+
+--- Testing Keystroke 0x32 -> expecting 'b' ---
+[ERROR] Press failed. Got: ''
+[INFO] Releasing key...
+[OK] Release correctly ignored by UART.
+
+========================================
+SIMULATION COMPLETE
+========================================
+$finish called at time : 6747390 ns : File "C:/Users/25591/Desktop/usb_keyboard/usb_keyboard.srcs/sim_1/new/tb_usb_keyboard.v" Line 118

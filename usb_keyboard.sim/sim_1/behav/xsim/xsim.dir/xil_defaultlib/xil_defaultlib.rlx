@@ -1,0 +1,8 @@
+0.7
+2020.2
+Oct 13 2023
+20:47:58
+C:/Users/25591/Desktop/usb_keyboard/usb_keyboard.sim/sim_1/behav/xsim/glbl.v,1697210495,verilog,,,,glbl,,,,,,,,
+C:/Users/25591/Desktop/usb_keyboard/usb_keyboard.srcs/sim_1/new/tb_usb_keyboard.v,1779540904,verilog,,,,tb_usb_keyboard_verified,,,,,,,,
+C:/Users/25591/Desktop/usb_keyboard/usb_keyboard.srcs/sources_1/new/ps2_transmitter.v,1779540881,verilog,,C:/Users/25591/Desktop/usb_keyboard/usb_keyboard.srcs/sources_1/new/usb_keyboard.v,,ps2_receiver,,,,,,,,
+C:/Users/25591/Desktop/usb_keyboard/usb_keyboard.srcs/sources_1/new/usb_keyboard.v,1779542908,verilog,,C:/Users/25591/Desktop/usb_keyboard/usb_keyboard.srcs/sim_1/new/tb_usb_keyboard.v,,usb_keyboard,,,,,,,,
