@@ -69,14 +69,14 @@ module sim_LaunchCPU;
             force dut.step_pulse = 1'b0;
             release dut.step_pulse;
 
-            repeat(10) @(posedge clk);
+            repeat(15) @(posedge clk);
         end
     endtask
 
     // ---- main stimulus ----
     initial begin
         reset_btn = 1'b0;     // assert reset  (reset = ~reset_btn = 1)
-        sw        = 16'h4000; // exec_mode = 2'b01 (single-instr step)
+        sw        = 16'h400A; // exec_mode = 2'b01 (single-instr step)
                               // sw[15]=0, sw[14]=1 → exec_mode[1:0]=01
         btn_step  = 1'b0;
 
