@@ -35,6 +35,9 @@ module ALL_top (
     wire [128:0] video_bus;
     wire        capture_pulse;
     wire [7:0]  snap_car;
+    wire        scan_done, scan_wr_en;
+    wire [7:0]  scan_wr_addr, scan_count;
+    wire [15:0] scan_wr_data;
 
     // ---- SW 2-stage synchronizer (metastability) ----
     (* ASYNC_REG = "TRUE" *) reg [15:0] sw_s1, sw_s2;
@@ -74,7 +77,12 @@ module ALL_top (
         .exec_mode    (exec_mode),
         .step_pulse   (step_pulse),
         .capture_pulse(capture_pulse),
-        .snap_car     (snap_car)
+        .snap_car     (snap_car),
+        .scan_done    (scan_done),
+        .scan_wr_en   (scan_wr_en),
+        .scan_wr_addr (scan_wr_addr),
+        .scan_wr_data (scan_wr_data),
+        .scan_count   (scan_count)
     );
 
     seven_seg_decimal seg_disp (
@@ -92,6 +100,11 @@ module ALL_top (
         .exec_mode    (exec_mode),
         .capture_pulse(capture_pulse),
         .snap_car     (snap_car),
+        .scan_done    (scan_done),
+        .scan_wr_en   (scan_wr_en),
+        .scan_wr_addr (scan_wr_addr),
+        .scan_wr_data (scan_wr_data),
+        .scan_count   (scan_count),
         .vga_hs       (vga_hs),
         .vga_vs       (vga_vs),
         .vga_r        (vga_r),

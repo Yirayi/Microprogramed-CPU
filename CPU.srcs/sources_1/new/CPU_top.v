@@ -96,7 +96,13 @@ module CPU_top (
     input  wire        step_pulse,         // single-cycle trigger from BTNC
     // VGA history capture signals
     output wire        capture_pulse,      // 1-cycle pulse: push to VGA ring buffer
-    output wire [7:0]  snap_car            // pre-advance CAR for micro-step display
+    output wire [7:0]  snap_car,           // pre-advance CAR for micro-step display
+    // Instruction scan output (sent to vga_display for static listing)
+    output reg         scan_done,          // scan complete; CPU execution released
+    output reg         scan_wr_en,         // 1-cycle write strobe
+    output reg  [7:0]  scan_wr_addr,       // write address (= PC index)
+    output reg  [15:0] scan_wr_data,       // instruction word {opcode, operand}
+    output reg  [7:0]  scan_count          // total instructions scanned (incl. HALT)
 );
     wire clks=~clk;
     // -------------------------------------------------------
@@ -124,6 +130,8 @@ module CPU_top (
     wire dm_rsta_busy;
     wire dm_rstb_busy;
     wire internal_reset = reset | cm_rsta_busy | im_rsta_busy|dm_rsta_busy|dm_rstb_busy;
+    // Hold CPU in reset while instruction scan is running
+    wire cpu_reset = internal_reset | !scan_done;
 
     // -------------------------------------------------------
     // Control Unit
@@ -133,7 +141,7 @@ module CPU_top (
     wire can_step;
     ControlUnit cu (
         .clk          (clk),
-        .reset        (internal_reset),
+        .reset        (cpu_reset),
         .micro_instr  (micro_instr),
         .mbr_high     (MBR[15:8]),   // opcode used for dispatch (C1)
         .car          (car),
@@ -161,10 +169,57 @@ module CPU_top (
     // -------------------------------------------------------
     wire [15:0] im_dout;
 
+    // -------------------------------------------------------
+    // Instruction scan FSM
+    // Runs once after BRAMs are ready; holds CPU in reset via cpu_reset.
+    // 3-cycle per address: SCAN_A (addr stable) → SCAN_B (wait) → SCAN_C (read/store)
+    // IM uses clka=~clk; addr latched at clka posedge (= clk negedge);
+    // registered output available 1 clka cycle later, valid at posedge clk+2.
+    // -------------------------------------------------------
+    localparam SC_IDLE = 2'd0, SC_A = 2'd1, SC_B = 2'd2, SC_C = 2'd3;
+    reg [1:0] scan_state;
+    reg [7:0] scan_addr;
+
+    always @(posedge clk or posedge reset) begin
+        if (reset) begin
+            scan_state   <= SC_IDLE;
+            scan_addr    <= 8'd0;
+            scan_done    <= 1'b0;
+            scan_wr_en   <= 1'b0;
+            scan_wr_addr <= 8'd0;
+            scan_wr_data <= 16'd0;
+            scan_count   <= 8'd0;
+        end else begin
+            scan_wr_en <= 1'b0;  // default: no write
+            case (scan_state)
+                SC_IDLE: if (!internal_reset) scan_state <= SC_A;
+                SC_A:    scan_state <= SC_B;
+                SC_B:    scan_state <= SC_C;
+                SC_C: begin
+                    // im_dout now valid for current scan_addr
+                    scan_wr_en   <= 1'b1;
+                    scan_wr_addr <= scan_addr;        // NBA: old value before increment
+                    scan_wr_data <= im_dout;
+                    if (im_dout[15:8] == 8'h07 || scan_addr == 8'hFF) begin
+                        scan_count <= scan_addr + 8'd1;
+                        scan_done  <= 1'b1;
+                        scan_state <= SC_IDLE;        // stay idle
+                    end else begin
+                        scan_addr  <= scan_addr + 8'd1;
+                        scan_state <= SC_A;
+                    end
+                end
+                default: scan_state <= SC_IDLE;
+            endcase
+        end
+    end
+
+    wire scan_busy = !scan_done;
+
     InstructionMemory im (
         .clka      (clks),
         .rsta      (reset),
-        .addra     (MAR),
+        .addra     (scan_busy ? scan_addr : MAR),  // mux: scan or normal fetch
         .douta     (im_dout),
         .rsta_busy (im_rsta_busy)
     );
@@ -266,8 +321,8 @@ module CPU_top (
     // -------------------------------------------------------
     // Register update: all registers clocked on posedge
     // -------------------------------------------------------
-    always @(posedge clk or posedge internal_reset) begin
-        if (internal_reset) begin
+    always @(posedge clk or posedge cpu_reset) begin
+        if (cpu_reset) begin
             MAR       <= 8'h00;
             MBR       <= 16'h0000;
             PC        <= 8'h00;

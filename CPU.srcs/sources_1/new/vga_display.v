@@ -79,6 +79,12 @@ module vga_display (
     input  wire [1:0]  exec_mode,
     input  wire        capture_pulse,  // 1-cycle negedge pulse from ControlUnit
     input  wire [7:0]  snap_car,       // pre-advance CAR (micro-step)
+    // Instruction scan bus (written once at startup, then static)
+    input  wire        scan_done,
+    input  wire        scan_wr_en,
+    input  wire [7:0]  scan_wr_addr,
+    input  wire [15:0] scan_wr_data,
+    input  wire [7:0]  scan_count,
     output wire        vga_hs,
     output wire        vga_vs,
     output wire [3:0]  vga_r,
@@ -475,9 +481,9 @@ always @(posedge clk or posedge reset) begin
     end
 end
 
-// Rendering signals
-wire in_left  = active && (hc < 10'd560) && (vc < 10'd256);
-wire [6:0] lcol  = hc[9:3];   // char column 0..69
+// Rendering signals (left panel shrunk to 48 chars = 384px)
+wire in_left  = active && (hc < 10'd384) && (vc < 10'd256);
+wire [5:0] lcol  = hc[8:3];   // char column 0..47
 wire [4:0] lrow  = vc[7:3];   // char row    0..31
 wire [2:0] lfpx  = hc[2:0];   // pixel col within char
 wire [2:0] lfrow = vc[2:0];   // pixel row within char
@@ -1174,20 +1180,98 @@ always @(*) begin
     if (!in_left)
         l_cidx = `CSP;
     else if (cur_type == 1'b0)
-        l_cidx = instr_char(cur_ir, cur_operand, lcol);
+        l_cidx = instr_char(cur_ir, cur_operand, {1'b0, lcol});
     else
-        l_cidx = micro_char(cur_ir /* cur_ir holds snap_car for micro entries */, lcol);
+        l_cidx = micro_char(cur_ir /* cur_ir holds snap_car for micro entries */, {1'b0, lcol});
 end
 
 wire [7:0] l_fbyte = fnt[{l_cidx, lfrow}];
 wire l_px = in_left && l_fbyte[lfpx];
 
 // ============================================================
+// MIDDLE panel: x=[392,560), y=[0,480)  –  21 chars × 60 rows
+// Static instruction listing from InstructionMemory scan.
+// Format per row: > XX  MMMMMM [OO]
+//   col  0:    '>' (highlighted) / ' '
+//   col  1-2:  instruction address hex
+//   col  3:    ' '
+//   col  4-9:  mnemonic (6 chars)
+//   col  10:   ' '
+//   col  11:   '[' or ' '
+//   col  12-13: operand hex or '  '
+//   col  14:   ']' or ' '
+//   col  15-20: unused (space)
+// ============================================================
+
+// Instruction ROM written by scan FSM
+(* ram_style = "distributed" *) reg [15:0] instr_rom [0:255];
+always @(posedge clk) begin
+    if (scan_wr_en)
+        instr_rom[scan_wr_addr] <= scan_wr_data;
+end
+
+// Middle panel coordinate signals
+wire in_mid  = active && (hc >= 10'd392) && (hc < 10'd560);
+wire [4:0] mcol  = hc[8:3] - 6'd49;   // char col 0..20  (392=49*8)
+wire [5:0] mrow  = vc[8:3];            // char row 0..59  (full 480px height)
+wire [2:0] mfpx  = hc[2:0];
+wire [2:0] mfrow = vc[2:0];
+
+// Highlight: which instruction PC to mark
+wire [7:0] cur_exec_pc = (v_CAR[7:4] == 4'h0) ? v_PC :
+                         (v_PC == 8'd0) ? 8'd0 : v_PC - 8'd1;
+wire [7:0] highlighted_pc =
+    (exec_mode == 2'b10) ? cur_exec_pc : v_PC;  // micro-step: executing; else: next fetch
+
+// Scrolling: keep highlighted row ~10 lines from top, clamped to list bounds
+wire [7:0] scroll_max = (scan_count > 8'd60) ? scan_count - 8'd60 : 8'd0;
+wire [7:0] ideal_base = (highlighted_pc >= 8'd10) ? highlighted_pc - 8'd10 : 8'd0;
+wire [7:0] mid_base   = (ideal_base > scroll_max) ? scroll_max : ideal_base;
+
+// Row → instruction index
+wire [7:0] mid_idx      = mid_base + {2'b0, mrow};
+wire       mid_row_valid = scan_done && (mid_idx < scan_count);
+wire [7:0] mid_ir  = instr_rom[mid_idx][15:8];
+wire [7:0] mid_op  = instr_rom[mid_idx][7:0];
+
+// Highlight flag (only in step modes)
+wire mid_hl = mid_row_valid && (exec_mode != 2'b00) && (mid_idx == highlighted_pc);
+
+// Character decode for middle panel
+reg [5:0] m_cidx;
+always @(*) begin
+    m_cidx = `CSP;
+    if (in_mid && mid_row_valid) begin
+        case (mcol)
+            5'd0:  m_cidx = mid_hl ? `CGT : `CSP;
+            5'd1:  m_cidx = {2'b0, mid_idx[7:4]};
+            5'd2:  m_cidx = {2'b0, mid_idx[3:0]};
+            5'd3:  m_cidx = `CSP;
+            5'd4:  m_cidx = mnemonic_char(mid_ir, 3'd0);
+            5'd5:  m_cidx = mnemonic_char(mid_ir, 3'd1);
+            5'd6:  m_cidx = mnemonic_char(mid_ir, 3'd2);
+            5'd7:  m_cidx = mnemonic_char(mid_ir, 3'd3);
+            5'd8:  m_cidx = mnemonic_char(mid_ir, 3'd4);
+            5'd9:  m_cidx = mnemonic_char(mid_ir, 3'd5);
+            5'd10: m_cidx = `CSP;
+            5'd11: m_cidx = has_operand(mid_ir) ? `CLBR : `CSP;
+            5'd12: m_cidx = has_operand(mid_ir) ? {2'b0, mid_op[7:4]} : `CSP;
+            5'd13: m_cidx = has_operand(mid_ir) ? {2'b0, mid_op[3:0]} : `CSP;
+            5'd14: m_cidx = has_operand(mid_ir) ? `CRBR : `CSP;
+            default: m_cidx = `CSP;
+        endcase
+    end
+end
+
+wire [7:0] m_fbyte = fnt[{m_cidx, mfrow}];
+wire m_px = in_mid && mid_row_valid && m_fbyte[mfpx];
+
+// ============================================================
 // Separators
 // ============================================================
-// Left panel right edge: x=384..385
-wire sep_l = active && (hc >= 10'd560) && (hc < 10'd562);
-// Right panel left edge: x=566..567
+// Left panel right edge: x=384..385  (moved from 560)
+wire sep_l = active && (hc >= 10'd384) && (hc < 10'd386);
+// Right panel left edge: x=566..567  (unchanged)
 wire sep_r = active && (hc >= 10'd566) && (hc < 10'd568);
 
 // ============================================================
@@ -1197,28 +1281,45 @@ wire [3:0] txt_r = v_halted ? 4'hF : 4'hF;
 wire [3:0] txt_g = v_halted ? 4'h4 : 4'hF;
 wire [3:0] txt_b = v_halted ? 4'h4 : 4'hF;
 
-assign vga_r = !active ? 4'h0 :
-               l_px    ? txt_r :
-               sep_l   ? 4'h5 :
-               in_left ? 4'h0 :
-               px      ? txt_r :
-               sep_r   ? 4'h5 :
-               in_panel? 4'h0 : 4'h0;
+// Middle panel colors:
+//   highlighted row text  : green  (0, F, 0)
+//   highlighted row bg    : dark green (0, 2, 0)
+//   normal row text       : white  (F, F, F)
+//   normal row bg         : black  (0, 0, 0)
+assign vga_r = !active   ? 4'h0 :
+               l_px      ? txt_r :
+               sep_l     ? 4'h5 :
+               in_left   ? 4'h0 :
+               m_px&&mid_hl ? 4'h0 :   // highlight text: green (no red)
+               m_px      ? 4'hF :       // normal text: white
+               mid_hl    ? 4'h0 :       // highlight bg: dark green (no red)
+               in_mid    ? 4'h0 :       // normal bg: black
+               px        ? txt_r :
+               sep_r     ? 4'h5 :
+               in_panel  ? 4'h0 : 4'h0;
 
-assign vga_g = !active ? 4'h0 :
-               l_px    ? txt_g :
-               sep_l   ? 4'h5 :
-               in_left ? 4'h0 :
-               px      ? txt_g :
-               sep_r   ? 4'h5 :
-               in_panel? 4'h0 : 4'h0;
+assign vga_g = !active   ? 4'h0 :
+               l_px      ? txt_g :
+               sep_l     ? 4'h5 :
+               in_left   ? 4'h0 :
+               m_px&&mid_hl ? 4'hF :   // highlight text: green (full)
+               m_px      ? 4'hF :       // normal text: white
+               mid_hl    ? 4'h2 :       // highlight bg: dark green
+               in_mid    ? 4'h0 :       // normal bg: black
+               px        ? txt_g :
+               sep_r     ? 4'h5 :
+               in_panel  ? 4'h0 : 4'h0;
 
-assign vga_b = !active ? 4'h0 :
-               l_px    ? txt_b :
-               sep_l   ? 4'h5 :
-               in_left ? 4'h2 :
-               px      ? txt_b :
-               sep_r   ? 4'h5 :
-               in_panel? 4'h2 : 4'h0;
+assign vga_b = !active   ? 4'h0 :
+               l_px      ? txt_b :
+               sep_l     ? 4'h5 :
+               in_left   ? 4'h2 :
+               m_px&&mid_hl ? 4'h0 :   // highlight text: green (no blue)
+               m_px      ? 4'hF :       // normal text: white
+               mid_hl    ? 4'h0 :       // highlight bg: dark green (no blue)
+               in_mid    ? 4'h0 :       // normal bg: black
+               px        ? txt_b :
+               sep_r     ? 4'h5 :
+               in_panel  ? 4'h2 : 4'h0;
 
 endmodule
