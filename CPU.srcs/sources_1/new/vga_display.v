@@ -8,7 +8,7 @@
 //   [96]     halted
 //   [128:97] micro_instr (current 32-bit microinstruction)
 //
-// RIGHT panel (x=568..639, y=8..119): live registers + micro_instr + mode (9 chars × 14 rows)
+// RIGHT panel (x=514..639, y=8..159): live registers + ports + micro_instr + mode (15 chars × 19 rows)
 // LEFT  panel (x=0..559,   y=0..255): instruction history (70 chars × 32 rows)
 //
 // Font index table (6-bit cidx, 512-entry array):
@@ -74,7 +74,7 @@
 module vga_display (
     input  wire        clk,
     input  wire        reset,
-    input  wire [128:0] video_bus,
+    input  wire [208:0] video_bus,
     // single-step history control
     input  wire [1:0]  exec_mode,
     input  wire        capture_pulse,  // 1-cycle negedge pulse from ControlUnit
@@ -103,6 +103,11 @@ wire [15:0] v_MR     = video_bus[87:72];
 wire [7:0]  v_CAR    = video_bus[95:88];
 wire        v_halted = video_bus[96];
 wire [31:0] v_MI     = video_bus[128:97];
+wire [15:0] v_PI0    = video_bus[144:129];
+wire [15:0] v_PO0    = video_bus[160:145];
+wire [15:0] v_PO1    = video_bus[176:161];
+wire [15:0] v_PO2    = video_bus[192:177];
+wire [15:0] v_PO3    = video_bus[208:193];
 
 // --- Pixel clock enable: 25 MHz effective rate (100 MHz ÷ 4) ---
 reg [1:0] cdiv;
@@ -281,163 +286,230 @@ initial begin
 end
 
 // ============================================================
-// RIGHT panel: x=[568,640), y=[8,120), 9 chars × 14 rows
-//   rows  0- 7: registers (PC MAR IR CAR MBR BR ACC MR)
+// RIGHT panel: x=[514,640), y=[8,160), 15 chars × 19 rows
+//   Column layout: label(0-3) + ':'(4) + data(5-12) + space(13-14)
+//     8-bit  values: '0','0',H,L  at cols 9-12
+//     16-bit values: H3,H2,H1,H0  at cols 9-12
+//     32-bit (MI) :  H7..H0       at cols 5-12
+//   rows  0- 3: PC  MAR  IR  CAR   (8-bit registers)
+//   rows  4- 7: MBR  BR  ACC  MR   (16-bit registers)
 //   row   8:    blank separator
-//   rows  9-10: micro_instr high/low 16 bits (MIH/MIL)
-//   row  11:    blank separator
-//   rows 12-13: exec_mode (MODE) and halt status (HALT)
+//   row   9:    MI (32-bit microinstruction, one row)
+//   row  10:    blank separator
+//   rows 11-12: MODE / HALT
+//   row  13:    blank separator
+//   rows 14-18: PI0  PO0  PO1  PO2  PO3  (I/O ports, 16-bit)
 // ============================================================
-wire in_panel = active && (hc >= 10'd568) && (vc >= 10'd8) && (vc < 10'd120);
-wire [9:0] tx = hc - 10'd568;
+wire in_panel = active && (hc >= 10'd514) && (vc >= 10'd8) && (vc < 10'd160);
+wire [9:0] tx = hc - 10'd514;
 wire [9:0] ty = vc - 10'd8;
 
-wire [3:0] ccol = tx[6:3];
-wire [3:0] crow = ty[6:3];
+wire [3:0] ccol = tx[6:3];   // char column 0..15
+wire [4:0] crow = ty[7:3];   // char row    0..18
 wire [2:0] fpx  = tx[2:0];
 wire [2:0] frow = ty[2:0];
+
+// Helper macro for 16-bit hex column decode (cols 9-12)
+// Use inline case instead of macro for synthesis safety.
 
 reg [5:0] cidx;
 always @(*) begin
     cidx = `CSP;
     case (crow)
-        4'd0: case (ccol)   // PC  :00XX
+        // ---- row 0: PC  :    00HL   ----
+        5'd0: case (ccol)
             4'd0: cidx = `CP;
             4'd1: cidx = `CC;
-            4'd2: cidx = `CSP;
-            4'd3: cidx = `CCOL;
-            4'd4: cidx = `C0;
-            4'd5: cidx = `C0;
-            4'd6: cidx = {2'b0, v_PC[7:4]};
-            4'd7: cidx = {2'b0, v_PC[3:0]};
+            4'd4: cidx = `CCOL;
+            4'd9:  cidx = `C0;
+            4'd10: cidx = `C0;
+            4'd11: cidx = {2'b0, v_PC[7:4]};
+            4'd12: cidx = {2'b0, v_PC[3:0]};
             default: cidx = `CSP;
         endcase
-        4'd1: case (ccol)   // MAR :00XX
+        // ---- row 1: MAR :    00HL   ----
+        5'd1: case (ccol)
             4'd0: cidx = `CM;
             4'd1: cidx = `CA;
             4'd2: cidx = `CR;
-            4'd3: cidx = `CCOL;
-            4'd4: cidx = `C0;
-            4'd5: cidx = `C0;
-            4'd6: cidx = {2'b0, v_MAR[7:4]};
-            4'd7: cidx = {2'b0, v_MAR[3:0]};
+            4'd4: cidx = `CCOL;
+            4'd9:  cidx = `C0;
+            4'd10: cidx = `C0;
+            4'd11: cidx = {2'b0, v_MAR[7:4]};
+            4'd12: cidx = {2'b0, v_MAR[3:0]};
             default: cidx = `CSP;
         endcase
-        4'd2: case (ccol)   // IR  :00XX
+        // ---- row 2: IR  :    00HL   ----
+        5'd2: case (ccol)
             4'd0: cidx = `CI;
             4'd1: cidx = `CR;
-            4'd2: cidx = `CSP;
-            4'd3: cidx = `CCOL;
-            4'd4: cidx = `C0;
-            4'd5: cidx = `C0;
-            4'd6: cidx = {2'b0, v_IR[7:4]};
-            4'd7: cidx = {2'b0, v_IR[3:0]};
+            4'd4: cidx = `CCOL;
+            4'd9:  cidx = `C0;
+            4'd10: cidx = `C0;
+            4'd11: cidx = {2'b0, v_IR[7:4]};
+            4'd12: cidx = {2'b0, v_IR[3:0]};
             default: cidx = `CSP;
         endcase
-        4'd3: case (ccol)   // CAR :00XX
+        // ---- row 3: CAR :    00HL   ----
+        5'd3: case (ccol)
             4'd0: cidx = `CC;
             4'd1: cidx = `CA;
             4'd2: cidx = `CR;
-            4'd3: cidx = `CCOL;
-            4'd4: cidx = `C0;
-            4'd5: cidx = `C0;
-            4'd6: cidx = {2'b0, v_CAR[7:4]};
-            4'd7: cidx = {2'b0, v_CAR[3:0]};
+            4'd4: cidx = `CCOL;
+            4'd9:  cidx = `C0;
+            4'd10: cidx = `C0;
+            4'd11: cidx = {2'b0, v_CAR[7:4]};
+            4'd12: cidx = {2'b0, v_CAR[3:0]};
             default: cidx = `CSP;
         endcase
-        4'd4: case (ccol)   // MBR :XXXX
+        // ---- row 4: MBR :    XXXX   ----
+        5'd4: case (ccol)
             4'd0: cidx = `CM;
             4'd1: cidx = `CB;
             4'd2: cidx = `CR;
-            4'd3: cidx = `CCOL;
-            4'd4: cidx = {2'b0, v_MBR[15:12]};
-            4'd5: cidx = {2'b0, v_MBR[11:8]};
-            4'd6: cidx = {2'b0, v_MBR[7:4]};
-            4'd7: cidx = {2'b0, v_MBR[3:0]};
+            4'd4: cidx = `CCOL;
+            4'd9:  cidx = {2'b0, v_MBR[15:12]};
+            4'd10: cidx = {2'b0, v_MBR[11:8]};
+            4'd11: cidx = {2'b0, v_MBR[7:4]};
+            4'd12: cidx = {2'b0, v_MBR[3:0]};
             default: cidx = `CSP;
         endcase
-        4'd5: case (ccol)   // BR  :XXXX
+        // ---- row 5: BR  :    XXXX   ----
+        5'd5: case (ccol)
             4'd0: cidx = `CB;
             4'd1: cidx = `CR;
-            4'd2: cidx = `CSP;
-            4'd3: cidx = `CCOL;
-            4'd4: cidx = {2'b0, v_BR[15:12]};
-            4'd5: cidx = {2'b0, v_BR[11:8]};
-            4'd6: cidx = {2'b0, v_BR[7:4]};
-            4'd7: cidx = {2'b0, v_BR[3:0]};
+            4'd4: cidx = `CCOL;
+            4'd9:  cidx = {2'b0, v_BR[15:12]};
+            4'd10: cidx = {2'b0, v_BR[11:8]};
+            4'd11: cidx = {2'b0, v_BR[7:4]};
+            4'd12: cidx = {2'b0, v_BR[3:0]};
             default: cidx = `CSP;
         endcase
-        4'd6: case (ccol)   // ACC :XXXX
+        // ---- row 6: ACC :    XXXX   ----
+        5'd6: case (ccol)
             4'd0: cidx = `CA;
             4'd1: cidx = `CC;
             4'd2: cidx = `CC;
-            4'd3: cidx = `CCOL;
-            4'd4: cidx = {2'b0, v_ACC[15:12]};
-            4'd5: cidx = {2'b0, v_ACC[11:8]};
-            4'd6: cidx = {2'b0, v_ACC[7:4]};
-            4'd7: cidx = {2'b0, v_ACC[3:0]};
+            4'd4: cidx = `CCOL;
+            4'd9:  cidx = {2'b0, v_ACC[15:12]};
+            4'd10: cidx = {2'b0, v_ACC[11:8]};
+            4'd11: cidx = {2'b0, v_ACC[7:4]};
+            4'd12: cidx = {2'b0, v_ACC[3:0]};
             default: cidx = `CSP;
         endcase
-        4'd7: case (ccol)   // MR  :XXXX
+        // ---- row 7: MR  :    XXXX   ----
+        5'd7: case (ccol)
             4'd0: cidx = `CM;
             4'd1: cidx = `CR;
-            4'd2: cidx = `CSP;
-            4'd3: cidx = `CCOL;
-            4'd4: cidx = {2'b0, v_MR[15:12]};
-            4'd5: cidx = {2'b0, v_MR[11:8]};
-            4'd6: cidx = {2'b0, v_MR[7:4]};
-            4'd7: cidx = {2'b0, v_MR[3:0]};
+            4'd4: cidx = `CCOL;
+            4'd9:  cidx = {2'b0, v_MR[15:12]};
+            4'd10: cidx = {2'b0, v_MR[11:8]};
+            4'd11: cidx = {2'b0, v_MR[7:4]};
+            4'd12: cidx = {2'b0, v_MR[3:0]};
             default: cidx = `CSP;
         endcase
         // row 8: blank separator
-        4'd9: case (ccol)   // MIH :XXXX  micro_instr[31:16]
+        // ---- row 9: MI  :XXXXXXXX   (32-bit in one row) ----
+        5'd9: case (ccol)
             4'd0: cidx = `CM;
             4'd1: cidx = `CI;
-            4'd2: cidx = `CH;
-            4'd3: cidx = `CCOL;
-            4'd4: cidx = {2'b0, v_MI[31:28]};
-            4'd5: cidx = {2'b0, v_MI[27:24]};
-            4'd6: cidx = {2'b0, v_MI[23:20]};
-            4'd7: cidx = {2'b0, v_MI[19:16]};
+            4'd4: cidx = `CCOL;
+            4'd5:  cidx = {2'b0, v_MI[31:28]};
+            4'd6:  cidx = {2'b0, v_MI[27:24]};
+            4'd7:  cidx = {2'b0, v_MI[23:20]};
+            4'd8:  cidx = {2'b0, v_MI[19:16]};
+            4'd9:  cidx = {2'b0, v_MI[15:12]};
+            4'd10: cidx = {2'b0, v_MI[11:8]};
+            4'd11: cidx = {2'b0, v_MI[7:4]};
+            4'd12: cidx = {2'b0, v_MI[3:0]};
             default: cidx = `CSP;
         endcase
-        4'd10: case (ccol)  // MIL :XXXX  micro_instr[15:0]
-            4'd0: cidx = `CM;
-            4'd1: cidx = `CI;
-            4'd2: cidx = `CL;
-            4'd3: cidx = `CCOL;
-            4'd4: cidx = {2'b0, v_MI[15:12]};
-            4'd5: cidx = {2'b0, v_MI[11:8]};
-            4'd6: cidx = {2'b0, v_MI[7:4]};
-            4'd7: cidx = {2'b0, v_MI[3:0]};
-            default: cidx = `CSP;
-        endcase
-        // row 11: blank separator
-        4'd12: case (ccol)  // MODE:XXXX  exec_mode  (RUN /ISTP/USTP)
+        // row 10: blank separator
+        // ---- row 11: MODE:   XXXX   ----
+        5'd11: case (ccol)
             4'd0: cidx = `CM;
             4'd1: cidx = `CO;
             4'd2: cidx = `CD;
             4'd3: cidx = `CE;
             4'd4: cidx = `CCOL;
-            4'd5: cidx = (exec_mode == 2'b00) ? `CR :
-                         (exec_mode == 2'b01) ? `CI : `CU;
-            4'd6: cidx = (exec_mode == 2'b00) ? `CU :
-                         (exec_mode == 2'b01) ? `CS : `CS;
-            4'd7: cidx = (exec_mode == 2'b00) ? `CN :
-                         (exec_mode == 2'b01) ? `CT : `CT;
-            4'd8: cidx = (exec_mode == 2'b00) ? `CSP :
-                         (exec_mode == 2'b01) ? `CP  : `CP;
+            4'd8:  cidx = (exec_mode == 2'b00) ? `CR :
+                          (exec_mode == 2'b01) ? `CI : `CU;
+            4'd9:  cidx = (exec_mode == 2'b00) ? `CU : `CS;
+            4'd10: cidx = (exec_mode == 2'b00) ? `CN : `CT;
+            4'd11: cidx = (exec_mode == 2'b00) ? `CSP : `CP;
             default: cidx = `CSP;
         endcase
-        4'd13: case (ccol)  // HALT:XXXX  halted status (NO  /YES )
+        // ---- row 12: HALT:      XXX ----
+        5'd12: case (ccol)
             4'd0: cidx = `CH;
             4'd1: cidx = `CA;
             4'd2: cidx = `CL;
             4'd3: cidx = `CT;
             4'd4: cidx = `CCOL;
-            4'd5: cidx = v_halted ? `CY : `CN;
-            4'd6: cidx = v_halted ? `CE : `CO;
-            4'd7: cidx = v_halted ? `CS : `CSP;
+            4'd9:  cidx = v_halted ? `CY : `CN;
+            4'd10: cidx = v_halted ? `CE : `CO;
+            4'd11: cidx = v_halted ? `CS : `CSP;
+            default: cidx = `CSP;
+        endcase
+        // row 13: blank separator
+        // ---- row 14: PI0 :    XXXX  (port_in[0]) ----
+        5'd14: case (ccol)
+            4'd0: cidx = `CP;
+            4'd1: cidx = `CI;
+            4'd2: cidx = `C0;
+            4'd4: cidx = `CCOL;
+            4'd9:  cidx = {2'b0, v_PI0[15:12]};
+            4'd10: cidx = {2'b0, v_PI0[11:8]};
+            4'd11: cidx = {2'b0, v_PI0[7:4]};
+            4'd12: cidx = {2'b0, v_PI0[3:0]};
+            default: cidx = `CSP;
+        endcase
+        // ---- row 15: PO0 :    XXXX  (port_out[0]) ----
+        5'd15: case (ccol)
+            4'd0: cidx = `CP;
+            4'd1: cidx = `CO;
+            4'd2: cidx = `C0;
+            4'd4: cidx = `CCOL;
+            4'd9:  cidx = {2'b0, v_PO0[15:12]};
+            4'd10: cidx = {2'b0, v_PO0[11:8]};
+            4'd11: cidx = {2'b0, v_PO0[7:4]};
+            4'd12: cidx = {2'b0, v_PO0[3:0]};
+            default: cidx = `CSP;
+        endcase
+        // ---- row 16: PO1 :    XXXX ----
+        5'd16: case (ccol)
+            4'd0: cidx = `CP;
+            4'd1: cidx = `CO;
+            4'd2: cidx = `C1;
+            4'd4: cidx = `CCOL;
+            4'd9:  cidx = {2'b0, v_PO1[15:12]};
+            4'd10: cidx = {2'b0, v_PO1[11:8]};
+            4'd11: cidx = {2'b0, v_PO1[7:4]};
+            4'd12: cidx = {2'b0, v_PO1[3:0]};
+            default: cidx = `CSP;
+        endcase
+        // ---- row 17: PO2 :    XXXX ----
+        5'd17: case (ccol)
+            4'd0: cidx = `CP;
+            4'd1: cidx = `CO;
+            4'd2: cidx = `C2f;
+            4'd4: cidx = `CCOL;
+            4'd9:  cidx = {2'b0, v_PO2[15:12]};
+            4'd10: cidx = {2'b0, v_PO2[11:8]};
+            4'd11: cidx = {2'b0, v_PO2[7:4]};
+            4'd12: cidx = {2'b0, v_PO2[3:0]};
+            default: cidx = `CSP;
+        endcase
+        // ---- row 18: PO3 :    XXXX ----
+        5'd18: case (ccol)
+            4'd0: cidx = `CP;
+            4'd1: cidx = `CO;
+            4'd2: cidx = `C3;
+            4'd4: cidx = `CCOL;
+            4'd9:  cidx = {2'b0, v_PO3[15:12]};
+            4'd10: cidx = {2'b0, v_PO3[11:8]};
+            4'd11: cidx = {2'b0, v_PO3[7:4]};
+            4'd12: cidx = {2'b0, v_PO3[3:0]};
             default: cidx = `CSP;
         endcase
         default: cidx = `CSP;
@@ -1211,7 +1283,7 @@ always @(posedge clk) begin
 end
 
 // Middle panel coordinate signals
-wire in_mid  = active && (hc >= 10'd392) && (hc < 10'd560);
+wire in_mid  = active && (hc >= 10'd392) && (hc < 10'd512);
 wire [4:0] mcol  = hc[8:3] - 6'd49;   // char col 0..20  (392=49*8)
 wire [5:0] mrow  = vc[8:3];            // char row 0..59  (full 480px height)
 wire [2:0] mfpx  = hc[2:0];
@@ -1271,8 +1343,8 @@ wire m_px = in_mid && mid_row_valid && m_fbyte[mfpx];
 // ============================================================
 // Left panel right edge: x=384..385  (moved from 560)
 wire sep_l = active && (hc >= 10'd384) && (hc < 10'd386);
-// Right panel left edge: x=566..567  (unchanged)
-wire sep_r = active && (hc >= 10'd566) && (hc < 10'd568);
+// Right panel left edge: x=512..513  (moved left with right panel)
+wire sep_r = active && (hc >= 10'd512) && (hc < 10'd514);
 
 // ============================================================
 // Color output

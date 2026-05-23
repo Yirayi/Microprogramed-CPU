@@ -90,7 +90,7 @@ module CPU_top (
     output reg  [3:0][15:0] port_out,      // output ports [0..3] → peripherals
     input  wire [3:0][15:0] port_in,       // input  ports [0..3] ← peripherals
     // packed debug bus: {micro_instr[128:97],halted[96],CAR[95:88],MR[87:72],ACC[71:56],BR[55:40],IR[39:32],PC[31:24],MBR[23:8],MAR[7:0]}
-    output wire [128:0] video_bus,
+    output wire [208:0] video_bus,
     // single-step debug controls (from ALL_top / switches+button)
     input  wire [1:0]  exec_mode,          // 00=run 01=instr-step 10=micro-step
     input  wire        step_pulse,         // single-cycle trigger from BTNC
@@ -433,8 +433,13 @@ module CPU_top (
     end
     // synthesis translate_on
 
-    // video_bus: {micro_instr[128:97], halted[96], car[95:88], MR[87:72],
-    //             ACC[71:56], BR[55:40], IR[39:32], PC[31:24], MBR[23:8], MAR[7:0]}
-    assign video_bus = {micro_instr, halted, car, MR, ACC, BR, IR, PC, MBR, MAR};
+    // video_bus packing (MSB first):
+    //   [208:193] port_out[3]   [192:177] port_out[2]  [176:161] port_out[1]
+    //   [160:145] port_out[0]   [144:129] port_in[0]
+    //   [128:97]  micro_instr   [96]      halted        [95:88]   car
+    //   [87:72]   MR            [71:56]   ACC           [55:40]   BR
+    //   [39:32]   IR            [31:24]   PC            [23:8]    MBR      [7:0] MAR
+    assign video_bus = {port_out[3], port_out[2], port_out[1], port_out[0],
+                        port_in[0], micro_instr, halted, car, MR, ACC, BR, IR, PC, MBR, MAR};
 
 endmodule
