@@ -1290,10 +1290,10 @@ assign vga_r = !active   ? 4'h0 :
                l_px      ? txt_r :
                sep_l     ? 4'h5 :
                in_left   ? 4'h0 :
-               m_px&&mid_hl ? 4'h0 :   // highlight text: green (no red)
-               m_px      ? 4'hF :       // normal text: white
-               mid_hl    ? 4'h0 :       // highlight bg: dark green (no red)
-               in_mid    ? 4'h0 :       // normal bg: black
+               m_px&&mid_hl ? 4'h0 :      // highlight text: green (no red)
+               m_px         ? 4'hF :      // normal text: white
+               in_mid&&mid_hl ? 4'h0 :   // highlight bg: dark green (no red)
+               in_mid       ? 4'h0 :      // normal bg: black
                px        ? txt_r :
                sep_r     ? 4'h5 :
                in_panel  ? 4'h0 : 4'h0;
@@ -1302,10 +1302,10 @@ assign vga_g = !active   ? 4'h0 :
                l_px      ? txt_g :
                sep_l     ? 4'h5 :
                in_left   ? 4'h0 :
-               m_px&&mid_hl ? 4'hF :   // highlight text: green (full)
-               m_px      ? 4'hF :       // normal text: white
-               mid_hl    ? 4'h2 :       // highlight bg: dark green
-               in_mid    ? 4'h0 :       // normal bg: black
+               m_px&&mid_hl ? 4'hF :      // highlight text: green (full)
+               m_px         ? 4'hF :      // normal text: white
+               in_mid&&mid_hl ? 4'h2 :   // highlight bg: dark green
+               in_mid       ? 4'h0 :      // normal bg: black
                px        ? txt_g :
                sep_r     ? 4'h5 :
                in_panel  ? 4'h0 : 4'h0;
@@ -1314,10 +1314,10 @@ assign vga_b = !active   ? 4'h0 :
                l_px      ? txt_b :
                sep_l     ? 4'h5 :
                in_left   ? 4'h2 :
-               m_px&&mid_hl ? 4'h0 :   // highlight text: green (no blue)
-               m_px      ? 4'hF :       // normal text: white
-               mid_hl    ? 4'h0 :       // highlight bg: dark green (no blue)
-               in_mid    ? 4'h0 :       // normal bg: black
+               m_px&&mid_hl ? 4'h0 :      // highlight text: green (no blue)
+               m_px         ? 4'hF :      // normal text: white
+               in_mid&&mid_hl ? 4'h0 :   // highlight bg: dark green (no blue)
+               in_mid       ? 4'h0 :      // normal bg: black
                px        ? txt_b :
                sep_r     ? 4'h5 :
                in_panel  ? 4'h2 : 4'h0;
