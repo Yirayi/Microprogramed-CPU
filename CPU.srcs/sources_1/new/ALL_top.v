@@ -24,9 +24,9 @@ module ALL_top (
     output wire [6:0]  SEG,
     // PS2 debug LEDs: [7:0]=last scan byte, [8]=latched key_valid
     output wire [8:0]  led,
-    // PS2 keyboard
-    input  wire        ps2_clk,
-    input  wire        ps2_data,
+    // PS2 keyboard (open-drain: FPGA can pull low to send commands)
+    inout  wire        ps2_clk,
+    inout  wire        ps2_data,
     // VGA outputs
     output wire        vga_hs,
     output wire        vga_vs,
@@ -61,6 +61,33 @@ module ALL_top (
     wire        ps2_is_backspace;
     wire        ps2_is_tab;
     wire [7:0]  ps2_last_scan;
+
+    // ---- PS2 open-drain tristate drivers ----
+    // FPGA pulls line low when oe=1; releases (high-Z) when oe=0.
+    // External PULLUP (XDC) keeps line high when neither side drives it.
+    wire ps2_clk_oe, ps2_data_oe;
+    assign ps2_clk  = ps2_clk_oe  ? 1'b0 : 1'bz;
+    assign ps2_data = ps2_data_oe ? 1'b0 : 1'bz;
+
+    // ---- PS2 host TX: send 0xF4 (Enable Scanning) after receiving 0xAA ----
+    wire ps2_tx_busy, ps2_tx_done;
+    // Trigger: received BAT-complete code from PIC24 and TX is free
+    wire send_f4 = ps2_key_valid && (ps2_key_data == 8'hAA) && !ps2_tx_busy;
+    // Gate key_valid to decoder so loopback of our own TX byte is ignored
+    wire ps2_key_valid_gated = ps2_key_valid & ~ps2_tx_busy;
+
+    PS2_host_tx u_ps2_tx (
+        .clk         (clk),
+        .rst         (reset),
+        .send        (send_f4),
+        .tx_byte     (8'hF4),
+        .clk_oe      (ps2_clk_oe),
+        .data_oe     (ps2_data_oe),
+        .ps2_clk_raw (ps2_clk),
+        .ps2_data_raw(ps2_data),
+        .busy        (ps2_tx_busy),
+        .tx_done     (ps2_tx_done)
+    );
 
     // ---- SW 2-stage synchronizer (metastability) ----
     (* ASYNC_REG = "TRUE" *) reg [15:0] sw_s1, sw_s2;
@@ -122,7 +149,7 @@ module ALL_top (
         .clk         (clk),
         .rst         (reset),
         .key_data    (ps2_key_data),
-        .key_valid   (ps2_key_valid),
+        .key_valid   (ps2_key_valid_gated),
         .char_valid  (ps2_char_valid),
         .char_data   (ps2_char_data),
         .is_enter    (ps2_is_enter),

@@ -40,8 +40,13 @@ reg        clk;
 reg        reset_btn;
 reg [15:0] sw;
 reg        btn_step;
-reg        ps2_clk_tb;   // PS/2 clock (idle = 1)
-reg        ps2_data_tb;  // PS/2 data  (idle = 1)
+// PS/2 open-drain：任意一侧可以拉低；pullup 代表板载上拉电阻 (XDC: PULLUP true)
+reg  tb_clk_oe  = 1'b0;   // 1 = testbench 拉低 ps2_clk
+reg  tb_data_oe = 1'b0;   // 1 = testbench 拉低 ps2_data
+wire ps2_clk_tb  = tb_clk_oe  ? 1'b0 : 1'bz;
+wire ps2_data_tb = tb_data_oe ? 1'b0 : 1'bz;
+pullup(ps2_clk_tb);   // 模拟板载上拉
+pullup(ps2_data_tb);
 
 // ── DUT outputs ────────────────────────────────────────────────────────────
 wire [7:0] AN;
@@ -100,16 +105,17 @@ task ps2_send_byte;
 
         for (i = 0; i < 11; i = i + 1) begin
             // 数据在时钟高电平期间设置（setup time = PS2_HALF）
-            ps2_data_tb = frame[i];
+            // frame[i]=0 → 拉低(tb_data_oe=1)；frame[i]=1 → 释放(tb_data_oe=0)
+            tb_data_oe = ~frame[i];
             #(PS2_HALF);
             // 时钟下降沿 → HOST(FPGA) 在此采样
-            ps2_clk_tb  = 1'b0;
+            tb_clk_oe  = 1'b1;   // 拉低 CLK
             #(PS2_HALF);
             // 时钟上升沿
-            ps2_clk_tb  = 1'b1;
+            tb_clk_oe  = 1'b0;   // 释放 CLK
             #(PS2_HALF / 4); // 短暂高电平，再进入下一位
         end
-        ps2_data_tb = 1'b1;       // 数据回到空闲高电平
+        tb_data_oe = 1'b0;        // 释放 DATA → pullup 回高
         #(PS2_HALF * 6);          // 字节间间隔
     end
 endtask
@@ -126,6 +132,40 @@ task ps2_key;
         ps2_send_byte(make_code); // make 码（断码）
     end
 endtask
+
+// ── PS/2 握手仿真：模拟 PIC24 为 FPGA 的 0xF4 发送生成设备时钟 ──────────
+// 原理：FPGA(PS2_host_tx) 在 S_INHIBIT 拉低 CLK 后释放；
+//       真实 PIC24 会接管 CLK 产生 11 个设备时钟脉冲，最后拉低 DATA 一拍 = ACK。
+//       仿真中检测 u_ps2_tx.clk_oe 下降沿（FPGA 释放 CLK）来模拟这一行为。
+initial begin : blk_dev_ack
+    // 等待 FPGA 的 inhibit 阶段结束（clk_oe 从 1 → 0）
+    @(negedge dut.u_ps2_tx.clk_oe);
+    // 此时 FPGA 已释放 CLK，DATA 仍为 0（start bit）
+    // 给 CLK 两个同步器周期的建立时间
+    repeat(4) @(posedge clk);
+    $display("[%8.3f us] TB-DEV: 产生 11 个设备时钟（接收 FPGA 的 0xF4）",
+             $realtime / 1000.0);
+    // 11 个设备时钟脉冲（对应 start + D0..D7 + parity + stop）
+    repeat(11) begin
+        #(PS2_HALF);
+        tb_clk_oe = 1'b1;   // 设备拉低 CLK（下降沿）
+        #(PS2_HALF);
+        tb_clk_oe = 1'b0;   // 设备释放 CLK（上升沿）
+    end
+    // ACK：设备拉低 DATA 一个时钟周期
+    tb_data_oe = 1'b1;
+    #(PS2_HALF);
+    tb_clk_oe  = 1'b1;
+    #(PS2_HALF);
+    tb_clk_oe  = 1'b0;
+    #(PS2_HALF);
+    tb_data_oe = 1'b0;
+    $display("[%8.3f us] TB-DEV: ACK 完成，握手结束", $realtime / 1000.0);
+end
+
+always @(posedge dut.u_ps2_tx.tx_done)
+    $display("[%8.3f us] PS2_host_tx  0xF4 发送完成（Enable Scanning 已确认）",
+             $realtime / 1000.0);
 
 // ── 事件监视器（打印时间戳，无需手动看波形）─────────────────────────────
 always @(posedge dut.u_ps2_rx.key_valid)
@@ -171,8 +211,7 @@ initial begin
     // SW[11:0]=10  → port IN[0] 测试数据
     sw          = 16'h400A;
     btn_step    = 1'b0;
-    ps2_clk_tb  = 1'b1;  // PS/2 空闲：高电平
-    ps2_data_tb = 1'b1;
+    // PS/2 空闲高电平由 pullup() 保证，无需显式赋值
 
     #200;
     reset_btn = 1'b1;    // 释放复位
@@ -184,6 +223,17 @@ initial begin
     $display("");
     $display("=== PS/2 仿真开始：exec_mode=01，键盘输入已激活 ===");
     $display("=== 预期：每次字符按键 input_pos+1，Enter 后 hist_count+1 ===");
+    $display("");
+
+    // ── 握手：模拟 PIC24 上电后发送 BAT Complete (0xAA) ──────────────────
+    // FPGA 收到 0xAA 后自动发送 0xF4（Enable Scanning）
+    // blk_dev_ack 块会为 0xF4 传输提供设备时钟并发送 ACK
+    $display("[%8.3f us] TB: 发送 0xAA (BAT Complete)", $realtime / 1000.0);
+    ps2_send_byte(8'hAA);
+    // 等待握手完成（tx_done 脉冲后总线恢复空闲）
+    @(posedge dut.u_ps2_tx.tx_done);
+    repeat(20) @(posedge clk);
+    $display("[%8.3f us] TB: 握手完毕，开始键盘输入测试", $realtime / 1000.0);
     $display("");
 
     // ── 输入第一行: "ADD 03" + Enter ─────────────────────────────────────
@@ -222,10 +272,10 @@ initial begin
     $finish;
 end
 
-// ── 安全超时：5 ms ──────────────────────────────────────────────────────
+// ── 安全超时：15 ms（含握手时间）───────────────────────────────────────
 initial begin
-    #5_000_000;
-    $display("=== Timeout (5 ms)：仿真未正常结束 ===");
+    #15_000_000;
+    $display("=== Timeout (15 ms)：仿真未正常结束 ===");
     $finish;
 end
 
