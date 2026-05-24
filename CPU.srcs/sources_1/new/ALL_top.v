@@ -69,11 +69,25 @@ module ALL_top (
     assign ps2_clk  = ps2_clk_oe  ? 1'b0 : 1'bz;
     assign ps2_data = ps2_data_oe ? 1'b0 : 1'bz;
 
-    // ---- PS2 host TX: send 0xF4 (Enable Scanning) after receiving 0xAA ----
+    // ---- PS2 host TX: send 0xF4 (Enable Scanning) -------------------------
     wire ps2_tx_busy, ps2_tx_done;
-    // Trigger: received BAT-complete code from PIC24 and TX is free
-    wire send_f4 = ps2_key_valid && (ps2_key_data == 8'hAA) && !ps2_tx_busy;
-    // Gate key_valid to decoder so loopback of our own TX byte is ignored
+
+    // PIC24 有约 2-3 s 空闲超时：超时后重发 0xAA 并重初始化键盘。
+    // 每 500 ms 发一次 0xF4，重置 PIC24 计时器，使其永远不到达超时阈值。
+    localparam KEEPALIVE_CYCLES = 26'd50_000_000; // 500 ms @ 100 MHz
+    reg [25:0] keepalive_cnt;
+    always @(posedge clk or posedge reset) begin
+        if (reset || ps2_key_valid || ps2_tx_done)
+            keepalive_cnt <= 26'd0;  // 有活动时重置，避免与正常收发重叠
+        else if (keepalive_cnt < KEEPALIVE_CYCLES)
+            keepalive_cnt <= keepalive_cnt + 26'd1;
+    end
+    wire keepalive_trigger = (keepalive_cnt == KEEPALIVE_CYCLES - 1);
+
+    // 触发条件：收到 0xAA（初始握手）或保活计时器到期
+    wire send_f4 = ((ps2_key_valid && ps2_key_data == 8'hAA) || keepalive_trigger)
+                   && !ps2_tx_busy;
+    // 屏蔽 TX 忙期间的 key_valid，防止 0xF4 自身回环进入 decoder
     wire ps2_key_valid_gated = ps2_key_valid & ~ps2_tx_busy;
 
     PS2_host_tx u_ps2_tx (
