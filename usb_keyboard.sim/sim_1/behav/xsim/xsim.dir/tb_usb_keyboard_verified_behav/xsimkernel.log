@@ -1,7 +1,7 @@
-Running: xsim.dir/tb_usb_keyboard_verified_behav/xsimk.exe -simmode gui -wdb tb_usb_keyboard_verified_behav.wdb -simrunnum 0 -socket 57750
+Running: xsim.dir/tb_usb_keyboard_verified_behav/xsimk.exe -simmode gui -wdb tb_usb_keyboard_verified_behav.wdb -simrunnum 0 -socket 59302
 Design successfully loaded
-Design Loading Memory Usage: 9940 KB (Peak: 9940 KB)
-Design Loading CPU Usage: 31 ms
+Design Loading Memory Usage: 9924 KB (Peak: 9924 KB)
+Design Loading CPU Usage: 62 ms
 Simulation completed
-Simulation Memory Usage: 18896 KB (Peak: 18896 KB)
-Simulation CPU Usage: 3358 ms
+Simulation Memory Usage: 18852 KB (Peak: 18852 KB)
+Simulation CPU Usage: 3452 ms
