@@ -46,6 +46,7 @@ reg        ps2_data_tb;  // PS/2 data  (idle = 1)
 // ── DUT outputs ────────────────────────────────────────────────────────────
 wire [7:0] AN;
 wire [6:0] SEG;
+wire [8:0] led;
 wire       vga_hs, vga_vs;
 wire [3:0] vga_r, vga_g, vga_b;
 
@@ -55,6 +56,7 @@ ALL_top dut (
     .reset_btn(reset_btn),
     .sw       (sw),
     .btn_step (btn_step),
+    .led      (led),
     .ps2_clk  (ps2_clk_tb),
     .ps2_data (ps2_data_tb),
     .AN       (AN),

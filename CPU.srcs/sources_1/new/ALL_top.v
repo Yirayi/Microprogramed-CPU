@@ -22,6 +22,8 @@ module ALL_top (
     input  wire        btn_step,
     output wire [7:0]  AN,
     output wire [6:0]  SEG,
+    // PS2 debug LEDs: [7:0]=last scan byte, [8]=latched key_valid
+    output wire [8:0]  led,
     // PS2 keyboard
     input  wire        ps2_clk,
     input  wire        ps2_data,
@@ -41,6 +43,14 @@ module ALL_top (
     wire        scan_done, scan_wr_en;
     wire [7:0]  scan_wr_addr, scan_count;
     wire [15:0] scan_wr_data;
+
+    // PS2 debug: latch key_valid so LED[8] stays on once any key is received
+    reg led_rxd;
+    always @(posedge clk or posedge reset)
+        if (reset) led_rxd <= 1'b0;
+        else if (ps2_key_valid) led_rxd <= 1'b1;
+    assign led[7:0] = ps2_key_data;
+    assign led[8]   = led_rxd;
 
     // PS2 keyboard decoder wires
     wire [7:0]  ps2_key_data;
