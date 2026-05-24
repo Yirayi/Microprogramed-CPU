@@ -1346,7 +1346,8 @@ wire l_px = in_left && l_fbyte[lfpx];
 // ============================================================
 wire in_bl    = active && (hc < 10'd384) && (vc >= 10'd256);
 wire [5:0] bl_col  = hc[8:3];                   // 0..47
-wire [4:0] bl_row  = (vc - 10'd256)[7:3];       // 0..27
+wire [9:0] bl_vc_off = vc - 10'd256;
+wire [4:0] bl_row  = bl_vc_off[7:3];            // 0..27
 wire [2:0] bl_fpx  = hc[2:0];
 wire [2:0] bl_frow = vc[2:0];
 
