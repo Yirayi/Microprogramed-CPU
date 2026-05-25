@@ -239,6 +239,7 @@ initial begin
     // ── 输入第一行: "ADD 03" + Enter ─────────────────────────────────────
     // 期望 input_pos: 0→1→2→3→4→5→6, 然后 Enter 复位到 0, hist_count→1
     ps2_key(8'h1C);  // A   font_idx=10
+    repeat(10000)@(posedge clk);
     ps2_key(8'h23);  // D   font_idx=13
     ps2_key(8'h23);  // D   font_idx=13
     ps2_key(8'h29);  // 空格 font_idx=16
