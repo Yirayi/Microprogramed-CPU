@@ -68,6 +68,9 @@ function [5:0] scan_to_font;
             8'h46: scan_to_font = 6'd9;  // 9
             // Space
             8'h29: scan_to_font = 6'd16; // space
+            // Brackets
+            8'h54: scan_to_font = 6'd33; // [
+            8'h5B: scan_to_font = 6'd34; // ]
             default: scan_to_font = 6'h3F; // unmapped
         endcase
     end

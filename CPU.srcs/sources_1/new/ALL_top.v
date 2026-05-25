@@ -52,6 +52,11 @@ module ALL_top (
     wire        ps2_is_tab;
     wire [7:0]  ps2_last_scan;
 
+    // Keyboard instruction injection wires
+    wire        inj_req;
+    wire [15:0] inj_instr;
+    wire        inj_done;
+
     // ---- SW 2-stage synchronizer (metastability) ----
     (* ASYNC_REG = "TRUE" *) reg [15:0] sw_s1, sw_s2;
     always @(posedge clk or posedge reset) begin
@@ -95,7 +100,10 @@ module ALL_top (
         .scan_wr_en   (scan_wr_en),
         .scan_wr_addr (scan_wr_addr),
         .scan_wr_data (scan_wr_data),
-        .scan_count   (scan_count)
+        .scan_count   (scan_count),
+        .inject_req   (inj_req),
+        .inject_instr (inj_instr),
+        .inject_done  (inj_done)
     );
 
     PS2_receiver u_ps2_rx (
@@ -147,6 +155,9 @@ module ALL_top (
         .ps2_is_backspace(ps2_is_backspace),
         .ps2_is_tab      (ps2_is_tab),
         .ps2_last_scan   (ps2_last_scan),
+        .inj_req         (inj_req),
+        .inj_instr       (inj_instr),
+        .inj_done        (inj_done),
         .vga_hs          (vga_hs),
         .vga_vs          (vga_vs),
         .vga_r           (vga_r),

@@ -92,6 +92,10 @@ module vga_display (
     input  wire        ps2_is_backspace,
     input  wire        ps2_is_tab,
     input  wire [7:0]  ps2_last_scan,
+    // Keyboard instruction injection to CPU
+    output reg         inj_req,           // held high until CPU acknowledges
+    output reg  [15:0] inj_instr,         // {opcode[7:0], operand[7:0]}
+    input  wire        inj_done,          // 1-cycle pulse from CPU when done
     output wire        vga_hs,
     output wire        vga_vs,
     output wire [3:0]  vga_r,
@@ -275,9 +279,9 @@ initial begin
     // 'W' (idx 41)
     fnt[328]=8'h63; fnt[329]=8'h63; fnt[330]=8'h63; fnt[331]=8'h6B;
     fnt[332]=8'h7F; fnt[333]=8'h77; fnt[334]=8'h63; fnt[335]=8'h00;
-    // 'K' (idx 42)
-    fnt[336]=8'h66; fnt[337]=8'h6C; fnt[338]=8'h78; fnt[339]=8'h70;
-    fnt[340]=8'h78; fnt[341]=8'h6C; fnt[342]=8'h66; fnt[343]=8'h00;
+    // 'K' (idx 42) — bit-reversed rows 1-5 to correct LSB-first mirror
+    fnt[336]=8'h66; fnt[337]=8'h36; fnt[338]=8'h1E; fnt[339]=8'h0E;
+    fnt[340]=8'h1E; fnt[341]=8'h36; fnt[342]=8'h66; fnt[343]=8'h00;
     // 'V' (idx 43)
     fnt[344]=8'h66; fnt[345]=8'h66; fnt[346]=8'h66; fnt[347]=8'h66;
     fnt[348]=8'h3C; fnt[349]=8'h3C; fnt[350]=8'h18; fnt[351]=8'h00;
@@ -574,7 +578,233 @@ always @(posedge clk or posedge reset) begin
 end
 
 // ============================================================
-// BL panel: input buffer and history logic
+// Instruction parser (combinational)
+// Reads input_buf[0..31] + input_pos → parse_valid, parse_opcode, parse_operand, parse_err
+// ============================================================
+localparam PERR_UNKNOWN = 2'd1;  // mnemonic not recognised
+localparam PERR_FORMAT  = 2'd2;  // wrong operand format
+localparam PERR_RANGE   = 2'd3;  // operand out of range
+
+localparam PFMT_NONE    = 2'd0;  // no operand  (HALT, NOT)
+localparam PFMT_BRACKET = 2'd1;  // [0..255]
+localparam PFMT_PORT    = 2'd2;  // [0..3]
+localparam PFMT_IMMED   = 2'd3;  // 0..255 without brackets (LOADI)
+
+reg        parse_valid;
+reg [7:0]  parse_opcode;
+reg [7:0]  parse_operand;
+reg [1:0]  parse_err;
+
+always @(*) begin : parser_blk
+    // local variables
+    reg [7:0]  p_opcode;
+    reg [1:0]  p_fmt;
+    reg [5:0]  p_mlen;    // mnemonic length
+    reg        p_found;
+    reg [9:0]  p_num;     // 10-bit to safely hold up to 999
+    reg [5:0]  p_dstart;  // index of first digit in input_buf
+    reg [5:0]  p_dcount;  // number of digit chars found
+    reg [5:0]  p_d0, p_d1, p_d2;
+
+    p_opcode = 8'h00; p_fmt = PFMT_NONE; p_mlen = 6'd0; p_found = 1'b0;
+    p_num = 10'd0; p_dstart = 6'd0; p_dcount = 6'd0;
+    p_d0 = 6'd0; p_d1 = 6'd0; p_d2 = 6'd0;
+    parse_valid = 1'b0; parse_opcode = 8'h00; parse_operand = 8'h00;
+    parse_err = PERR_UNKNOWN;
+
+    if (input_pos > 6'd0) begin
+        // ---- 2-char mnemonics ----
+        if (input_buf[0]==`CI && input_buf[1]==`CN &&
+            (input_pos==6'd2 || input_buf[2]==`CSP)) begin
+            p_opcode=8'h10; p_fmt=PFMT_PORT;    p_mlen=6'd2; p_found=1'b1;  // IN
+        end else
+        if (input_buf[0]==`CO && input_buf[1]==`CR &&
+            (input_pos==6'd2 || input_buf[2]==`CSP)) begin
+            p_opcode=8'h0B; p_fmt=PFMT_BRACKET; p_mlen=6'd2; p_found=1'b1;  // OR
+        end else
+        // ---- 3-char mnemonics ----
+        if (input_buf[0]==`CA && input_buf[1]==`CD && input_buf[2]==`CD &&
+            (input_pos==6'd3 || input_buf[3]==`CSP)) begin
+            p_opcode=8'h03; p_fmt=PFMT_BRACKET; p_mlen=6'd3; p_found=1'b1;  // ADD
+        end else
+        if (input_buf[0]==`CA && input_buf[1]==`CN && input_buf[2]==`CD &&
+            (input_pos==6'd3 || input_buf[3]==`CSP)) begin
+            p_opcode=8'h0A; p_fmt=PFMT_BRACKET; p_mlen=6'd3; p_found=1'b1;  // AND
+        end else
+        // JMP: char[3] must NOT be G (to exclude JMPGEZ)
+        if (input_buf[0]==`CJ && input_buf[1]==`CM && input_buf[2]==`CP &&
+            input_buf[3]!=`CG &&
+            (input_pos==6'd3 || input_buf[3]==`CSP)) begin
+            p_opcode=8'h06; p_fmt=PFMT_BRACKET; p_mlen=6'd3; p_found=1'b1;  // JMP
+        end else
+        if (input_buf[0]==`CM && input_buf[1]==`CP && input_buf[2]==`CY &&
+            (input_pos==6'd3 || input_buf[3]==`CSP)) begin
+            p_opcode=8'h08; p_fmt=PFMT_BRACKET; p_mlen=6'd3; p_found=1'b1;  // MPY
+        end else
+        if (input_buf[0]==`CN && input_buf[1]==`CO && input_buf[2]==`CT &&
+            input_pos==6'd3) begin
+            p_opcode=8'h0C; p_fmt=PFMT_NONE;    p_mlen=6'd3; p_found=1'b1;  // NOT
+        end else
+        if (input_buf[0]==`CO && input_buf[1]==`CU && input_buf[2]==`CT &&
+            (input_pos==6'd3 || input_buf[3]==`CSP)) begin
+            p_opcode=8'h0F; p_fmt=PFMT_PORT;    p_mlen=6'd3; p_found=1'b1;  // OUT
+        end else
+        if (input_buf[0]==`CS && input_buf[1]==`CU && input_buf[2]==`CB &&
+            (input_pos==6'd3 || input_buf[3]==`CSP)) begin
+            p_opcode=8'h04; p_fmt=PFMT_BRACKET; p_mlen=6'd3; p_found=1'b1;  // SUB
+        end else
+        // ---- 4-char mnemonics ----
+        if (input_buf[0]==`CH && input_buf[1]==`CA && input_buf[2]==`CL &&
+            input_buf[3]==`CT && input_pos==6'd4) begin
+            p_opcode=8'h07; p_fmt=PFMT_NONE;    p_mlen=6'd4; p_found=1'b1;  // HALT
+        end else
+        // LOAD: char[4] must NOT be I (to exclude LOADI)
+        if (input_buf[0]==`CL && input_buf[1]==`CO && input_buf[2]==`CA &&
+            input_buf[3]==`CD && input_buf[4]!=`CI &&
+            (input_pos==6'd4 || input_buf[4]==`CSP)) begin
+            p_opcode=8'h02; p_fmt=PFMT_BRACKET; p_mlen=6'd4; p_found=1'b1;  // LOAD
+        end else
+        // ---- 5-char mnemonics ----
+        if (input_buf[0]==`CL && input_buf[1]==`CO && input_buf[2]==`CA &&
+            input_buf[3]==`CD && input_buf[4]==`CI &&
+            (input_pos==6'd5 || input_buf[5]==`CSP)) begin
+            p_opcode=8'h09; p_fmt=PFMT_IMMED;   p_mlen=6'd5; p_found=1'b1;  // LOADI
+        end else
+        if (input_buf[0]==`CS && input_buf[1]==`CT && input_buf[2]==`CO &&
+            input_buf[3]==`CR && input_buf[4]==`CE &&
+            (input_pos==6'd5 || input_buf[5]==`CSP)) begin
+            p_opcode=8'h01; p_fmt=PFMT_BRACKET; p_mlen=6'd5; p_found=1'b1;  // STORE
+        end else
+        // ---- 6-char mnemonics ----
+        if (input_buf[0]==`CJ && input_buf[1]==`CM && input_buf[2]==`CP &&
+            input_buf[3]==`CG && input_buf[4]==`CE && input_buf[5]==`CZ &&
+            (input_pos==6'd6 || input_buf[6]==`CSP)) begin
+            p_opcode=8'h05; p_fmt=PFMT_BRACKET; p_mlen=6'd6; p_found=1'b1;  // JMPGEZ
+        end else
+        if (input_buf[0]==`CS && input_buf[1]==`CH && input_buf[2]==`CI &&
+            input_buf[3]==`CF && input_buf[4]==`CT && input_buf[5]==`CR &&
+            (input_pos==6'd6 || input_buf[6]==`CSP)) begin
+            p_opcode=8'h0D; p_fmt=PFMT_BRACKET; p_mlen=6'd6; p_found=1'b1;  // SHIFTR
+        end else
+        if (input_buf[0]==`CS && input_buf[1]==`CH && input_buf[2]==`CI &&
+            input_buf[3]==`CF && input_buf[4]==`CT && input_buf[5]==`CL &&
+            (input_pos==6'd6 || input_buf[6]==`CSP)) begin
+            p_opcode=8'h0E; p_fmt=PFMT_BRACKET; p_mlen=6'd6; p_found=1'b1;  // SHIFTL
+        end
+
+        if (p_found) begin
+            parse_opcode = p_opcode;
+            parse_err    = PERR_FORMAT;  // default for found-but-bad-operand
+
+            case (p_fmt)
+                PFMT_NONE: begin
+                    // No operand: input_pos must equal mnemonic length exactly
+                    if (input_pos == p_mlen) begin
+                        parse_valid   = 1'b1;
+                        parse_operand = 8'h00;
+                        parse_err     = 2'd0;
+                    end
+                end
+
+                PFMT_BRACKET, PFMT_PORT: begin
+                    // Format: MNEMONIC SP [ digits ]
+                    p_dstart = p_mlen + 6'd2;  // position of first digit
+                    if (input_buf[p_mlen] == `CSP && input_buf[p_mlen+6'd1] == `CLBR) begin
+                        // 1 digit
+                        if (input_buf[p_dstart] <= 6'd9 &&
+                            input_buf[p_dstart+6'd1] == `CRBR &&
+                            input_pos == p_dstart + 6'd2) begin
+                            p_d0 = input_buf[p_dstart];
+                            p_num = {4'b0, p_d0};
+                            p_dcount = 6'd1;
+                        end
+                        // 2 digits
+                        else if (input_buf[p_dstart] <= 6'd9 &&
+                                 input_buf[p_dstart+6'd1] <= 6'd9 &&
+                                 input_buf[p_dstart+6'd2] == `CRBR &&
+                                 input_pos == p_dstart + 6'd3) begin
+                            p_d0 = input_buf[p_dstart];
+                            p_d1 = input_buf[p_dstart+6'd1];
+                            p_num = {4'b0, p_d0} * 10'd10 + {4'b0, p_d1};
+                            p_dcount = 6'd2;
+                        end
+                        // 3 digits
+                        else if (input_buf[p_dstart] <= 6'd9 &&
+                                 input_buf[p_dstart+6'd1] <= 6'd9 &&
+                                 input_buf[p_dstart+6'd2] <= 6'd9 &&
+                                 input_buf[p_dstart+6'd3] == `CRBR &&
+                                 input_pos == p_dstart + 6'd4) begin
+                            p_d0 = input_buf[p_dstart];
+                            p_d1 = input_buf[p_dstart+6'd1];
+                            p_d2 = input_buf[p_dstart+6'd2];
+                            p_num = {4'b0, p_d0} * 10'd100 + {4'b0, p_d1} * 10'd10 + {4'b0, p_d2};
+                            p_dcount = 6'd3;
+                        end
+                        if (p_dcount > 0) begin
+                            if (p_num > 10'd255) begin
+                                parse_err = PERR_RANGE;
+                            end else if (p_fmt == PFMT_PORT && p_num > 10'd3) begin
+                                parse_err = PERR_RANGE;
+                            end else begin
+                                parse_valid   = 1'b1;
+                                parse_operand = p_num[7:0];
+                                parse_err     = 2'd0;
+                            end
+                        end
+                    end
+                end
+
+                PFMT_IMMED: begin
+                    // Format: LOADI SP digits  (no brackets)
+                    p_dstart = p_mlen + 6'd1;  // position of first digit
+                    if (input_buf[p_mlen] == `CSP) begin
+                        // 1 digit
+                        if (input_buf[p_dstart] <= 6'd9 &&
+                            input_pos == p_dstart + 6'd1) begin
+                            p_d0 = input_buf[p_dstart];
+                            p_num = {4'b0, p_d0};
+                            p_dcount = 6'd1;
+                        end
+                        // 2 digits
+                        else if (input_buf[p_dstart] <= 6'd9 &&
+                                 input_buf[p_dstart+6'd1] <= 6'd9 &&
+                                 input_pos == p_dstart + 6'd2) begin
+                            p_d0 = input_buf[p_dstart];
+                            p_d1 = input_buf[p_dstart+6'd1];
+                            p_num = {4'b0, p_d0} * 10'd10 + {4'b0, p_d1};
+                            p_dcount = 6'd2;
+                        end
+                        // 3 digits
+                        else if (input_buf[p_dstart] <= 6'd9 &&
+                                 input_buf[p_dstart+6'd1] <= 6'd9 &&
+                                 input_buf[p_dstart+6'd2] <= 6'd9 &&
+                                 input_pos == p_dstart + 6'd3) begin
+                            p_d0 = input_buf[p_dstart];
+                            p_d1 = input_buf[p_dstart+6'd1];
+                            p_d2 = input_buf[p_dstart+6'd2];
+                            p_num = {4'b0, p_d0} * 10'd100 + {4'b0, p_d1} * 10'd10 + {4'b0, p_d2};
+                            p_dcount = 6'd3;
+                        end
+                        if (p_dcount > 0) begin
+                            if (p_num > 10'd255) begin
+                                parse_err = PERR_RANGE;
+                            end else begin
+                                parse_valid   = 1'b1;
+                                parse_operand = p_num[7:0];
+                                parse_err     = 2'd0;
+                            end
+                        end
+                    end
+                end
+
+                default: ;
+            endcase
+        end
+    end
+end
+
+// ============================================================
+// BL panel: input buffer, history logic, and injection control
 // ============================================================
 always @(posedge clk or posedge reset) begin
     if (reset) begin
@@ -584,9 +814,14 @@ always @(posedge clk or posedge reset) begin
         input_hist_count <= 5'd0;
         blink_cnt        <= 6'd0;
         blink_on         <= 1'b1;
+        inj_req          <= 1'b0;
+        inj_instr        <= 16'h0000;
         for (bl_i = 0; bl_i < 32; bl_i = bl_i + 1)
             input_buf[bl_i] <= `CSP;
     end else begin
+        // Clear injection request once CPU acknowledges
+        if (inj_done) inj_req <= 1'b0;
+
         // Cursor blink: increment at VGA vertical blanking start (once per frame ~60Hz)
         if (pclk_en && hc == 10'd0 && vc == V_ACT) begin
             if (blink_cnt == 6'd29) begin
@@ -608,17 +843,63 @@ always @(posedge clk or posedge reset) begin
             if (ps2_is_backspace && input_pos > 6'd0)
                 input_pos <= input_pos - 6'd1;
             if (ps2_is_enter) begin
-                // Save current line to history ring buffer
-                for (bl_i = 0; bl_i < 32; bl_i = bl_i + 1) begin
-                    if (bl_i < input_pos)
-                        input_hist[input_hist_head][bl_i] <= input_buf[bl_i];
-                    else
+                if (parse_valid) begin
+                    // Valid instruction: save typed text to history
+                    for (bl_i = 0; bl_i < 32; bl_i = bl_i + 1) begin
+                        if (bl_i < input_pos)
+                            input_hist[input_hist_head][bl_i] <= input_buf[bl_i];
+                        else
+                            input_hist[input_hist_head][bl_i] <= `CSP;
+                    end
+                    input_hist_head  <= input_hist_head + 4'd1;
+                    if (input_hist_count < 5'd16)
+                        input_hist_count <= input_hist_count + 5'd1;
+                    // Trigger injection unless CPU is halted or already injecting
+                    if (!v_halted && !inj_req) begin
+                        inj_req   <= 1'b1;
+                        inj_instr <= {parse_opcode, parse_operand};
+                    end
+                end else if (input_pos > 6'd0) begin
+                    // Invalid instruction: write error message to history
+                    // First clear the entire row to spaces
+                    for (bl_i = 0; bl_i < 32; bl_i = bl_i + 1)
                         input_hist[input_hist_head][bl_i] <= `CSP;
+                    // Write "ERR " prefix (4 chars)
+                    input_hist[input_hist_head][ 0] <= `CE;
+                    input_hist[input_hist_head][ 1] <= `CR;
+                    input_hist[input_hist_head][ 2] <= `CR;
+                    input_hist[input_hist_head][ 3] <= `CSP;
+                    // Error-specific suffix
+                    if (parse_err == PERR_UNKNOWN) begin
+                        // "UNKNOWN"
+                        input_hist[input_hist_head][ 4] <= `CU;
+                        input_hist[input_hist_head][ 5] <= `CN;
+                        input_hist[input_hist_head][ 6] <= `CK;
+                        input_hist[input_hist_head][ 7] <= `CN;
+                        input_hist[input_hist_head][ 8] <= `CO;
+                        input_hist[input_hist_head][ 9] <= `CW;
+                        input_hist[input_hist_head][10] <= `CN;
+                    end else if (parse_err == PERR_FORMAT) begin
+                        // "FORMAT"
+                        input_hist[input_hist_head][ 4] <= `CF;
+                        input_hist[input_hist_head][ 5] <= `CO;
+                        input_hist[input_hist_head][ 6] <= `CR;
+                        input_hist[input_hist_head][ 7] <= `CM;
+                        input_hist[input_hist_head][ 8] <= `CA;
+                        input_hist[input_hist_head][ 9] <= `CT;
+                    end else begin
+                        // "RANGE"
+                        input_hist[input_hist_head][ 4] <= `CR;
+                        input_hist[input_hist_head][ 5] <= `CA;
+                        input_hist[input_hist_head][ 6] <= `CN;
+                        input_hist[input_hist_head][ 7] <= `CG;
+                        input_hist[input_hist_head][ 8] <= `CE;
+                    end
+                    input_hist_head  <= input_hist_head + 4'd1;
+                    if (input_hist_count < 5'd16)
+                        input_hist_count <= input_hist_count + 5'd1;
                 end
-                input_hist_head  <= input_hist_head + 4'd1;
-                if (input_hist_count < 5'd16)
-                    input_hist_count <= input_hist_count + 5'd1;
-                // Clear input buffer
+                // Always clear input buffer after Enter
                 for (bl_i = 0; bl_i < 32; bl_i = bl_i + 1)
                     input_buf[bl_i] <= `CSP;
                 input_pos <= 6'd0;
