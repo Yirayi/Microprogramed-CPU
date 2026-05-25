@@ -77,3 +77,9 @@ set_property IOSTANDARD LVCMOS33 [get_ports {sw[*]}]
 # btn_step = BTNC (N17): 单步触发
 set_property PACKAGE_PIN N17 [get_ports btn_step]
 set_property IOSTANDARD LVCMOS33 [get_ports btn_step]
+
+# PS/2 键盘接口 (Nexys 4 DDR 手册)
+set_property PACKAGE_PIN F4 [get_ports ps2_clk]
+set_property IOSTANDARD LVCMOS33 [get_ports ps2_clk]
+set_property PACKAGE_PIN B2 [get_ports ps2_data]
+set_property IOSTANDARD LVCMOS33 [get_ports ps2_data]

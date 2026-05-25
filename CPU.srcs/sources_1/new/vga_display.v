@@ -85,6 +85,12 @@ module vga_display (
     input  wire [7:0]  scan_wr_addr,
     input  wire [15:0] scan_wr_data,
     input  wire [7:0]  scan_count,
+    // Keyboard command-line display (bottom-left area)
+    input  wire [89:0] kb_buf_pack,    // 15 × 6-bit font indices for input buffer
+    input  wire [3:0]  kb_buf_len,     // actual char count in buffer
+    input  wire        kb_cursor,      // cursor blink state
+    input  wire [3:0]  kb_status,      // 0=idle 1=ok 2=err_unknown 3=err_format 4=err_mode
+    input  wire [89:0] kb_msg_pack,    // 15 × 6-bit font indices for status message
     output wire        vga_hs,
     output wire        vga_vs,
     output wire [3:0]  vga_r,
@@ -268,9 +274,9 @@ initial begin
     // 'W' (idx 41)
     fnt[328]=8'h63; fnt[329]=8'h63; fnt[330]=8'h63; fnt[331]=8'h6B;
     fnt[332]=8'h7F; fnt[333]=8'h77; fnt[334]=8'h63; fnt[335]=8'h00;
-    // 'K' (idx 42)
-    fnt[336]=8'h66; fnt[337]=8'h6C; fnt[338]=8'h78; fnt[339]=8'h70;
-    fnt[340]=8'h78; fnt[341]=8'h6C; fnt[342]=8'h66; fnt[343]=8'h00;
+    // 'K' (idx 42) – corrected (was horizontally mirrored)
+    fnt[336]=8'h66; fnt[337]=8'h36; fnt[338]=8'h1E; fnt[339]=8'h0E;
+    fnt[340]=8'h1E; fnt[341]=8'h36; fnt[342]=8'h66; fnt[343]=8'h00;
     // 'V' (idx 43)
     fnt[344]=8'h66; fnt[345]=8'h66; fnt[346]=8'h66; fnt[347]=8'h66;
     fnt[348]=8'h3C; fnt[349]=8'h3C; fnt[350]=8'h18; fnt[351]=8'h00;
@@ -1339,6 +1345,130 @@ wire [7:0] m_fbyte = fnt[{m_cidx, mfrow}];
 wire m_px = in_mid && mid_row_valid && m_fbyte[mfpx];
 
 // ============================================================
+// KEYBOARD INPUT display area
+// Location: x=0..383, y=256..319  (8 rows × 8px = 64px)
+// Row layout (krow5 = vc[7:3] - 32):
+//   row 0 (y=256..263): separator bar (solid color, no char rendering)
+//   row 1 (y=264..271): "KBD> " + buffer (cols 5..19) + cursor '|' (col 20)
+//   row 2 (y=272..279): status message (cols 0..14)
+//   rows 3-7: blank
+// ============================================================
+wire in_kbd  = active && (hc < 10'd384) && (vc >= 10'd256) && (vc < 10'd320);
+wire [5:0] kcol  = hc[8:3];           // char column 0..47
+wire [4:0] krow5 = vc[7:3] - 5'd32;  // row within kbd area (0..7)
+wire [2:0] kfpx  = hc[2:0];
+wire [2:0] kfrow = vc[2:0];
+
+// Unpack keyboard input buffer (15 chars × 6 bits)
+wire [5:0] kb0  = kb_buf_pack[ 5: 0];  wire [5:0] kb1  = kb_buf_pack[11: 6];
+wire [5:0] kb2  = kb_buf_pack[17:12];  wire [5:0] kb3  = kb_buf_pack[23:18];
+wire [5:0] kb4  = kb_buf_pack[29:24];  wire [5:0] kb5  = kb_buf_pack[35:30];
+wire [5:0] kb6  = kb_buf_pack[41:36];  wire [5:0] kb7  = kb_buf_pack[47:42];
+wire [5:0] kb8  = kb_buf_pack[53:48];  wire [5:0] kb9  = kb_buf_pack[59:54];
+wire [5:0] kb10 = kb_buf_pack[65:60];  wire [5:0] kb11 = kb_buf_pack[71:66];
+wire [5:0] kb12 = kb_buf_pack[77:72];  wire [5:0] kb13 = kb_buf_pack[83:78];
+wire [5:0] kb14 = kb_buf_pack[89:84];
+
+// Unpack status message (15 chars × 6 bits)
+wire [5:0] km0  = kb_msg_pack[ 5: 0];  wire [5:0] km1  = kb_msg_pack[11: 6];
+wire [5:0] km2  = kb_msg_pack[17:12];  wire [5:0] km3  = kb_msg_pack[23:18];
+wire [5:0] km4  = kb_msg_pack[29:24];  wire [5:0] km5  = kb_msg_pack[35:30];
+wire [5:0] km6  = kb_msg_pack[41:36];  wire [5:0] km7  = kb_msg_pack[47:42];
+wire [5:0] km8  = kb_msg_pack[53:48];  wire [5:0] km9  = kb_msg_pack[59:54];
+wire [5:0] km10 = kb_msg_pack[65:60];  wire [5:0] km11 = kb_msg_pack[71:66];
+wire [5:0] km12 = kb_msg_pack[77:72];  wire [5:0] km13 = kb_msg_pack[83:78];
+wire [5:0] km14 = kb_msg_pack[89:84];
+
+// Select character from buffer by 6-bit index (0..14)
+function [5:0] kbchar;
+    input [5:0] idx;
+    case (idx)
+        6'd0:  kbchar = kb0;   6'd1:  kbchar = kb1;   6'd2:  kbchar = kb2;
+        6'd3:  kbchar = kb3;   6'd4:  kbchar = kb4;   6'd5:  kbchar = kb5;
+        6'd6:  kbchar = kb6;   6'd7:  kbchar = kb7;   6'd8:  kbchar = kb8;
+        6'd9:  kbchar = kb9;   6'd10: kbchar = kb10;  6'd11: kbchar = kb11;
+        6'd12: kbchar = kb12;  6'd13: kbchar = kb13;  6'd14: kbchar = kb14;
+        default: kbchar = 6'd16; // space
+    endcase
+endfunction
+
+// Select character from status message by 6-bit index (0..14)
+function [5:0] kmchar;
+    input [5:0] idx;
+    case (idx)
+        6'd0:  kmchar = km0;   6'd1:  kmchar = km1;   6'd2:  kmchar = km2;
+        6'd3:  kmchar = km3;   6'd4:  kmchar = km4;   6'd5:  kmchar = km5;
+        6'd6:  kmchar = km6;   6'd7:  kmchar = km7;   6'd8:  kmchar = km8;
+        6'd9:  kmchar = km9;   6'd10: kmchar = km10;  6'd11: kmchar = km11;
+        6'd12: kmchar = km12;  6'd13: kmchar = km13;  6'd14: kmchar = km14;
+        default: kmchar = 6'd16; // space
+    endcase
+endfunction
+
+// Cursor column: 5 (header offset) + kb_buf_len (0..15)
+wire [5:0] k_cursor_col = 6'd5 + {2'b0, kb_buf_len};  // col where cursor sits
+
+// Character decode for keyboard display area
+reg [5:0] k_cidx;
+always @(*) begin
+    k_cidx = `CSP;
+    if (in_kbd) begin
+        case (krow5)
+            // Row 0: separator – no characters drawn, color handled in color block
+            5'd0: k_cidx = `CSP;
+
+            // Row 1: "KBD> " then buffer then cursor
+            5'd1: begin
+                case (kcol)
+                    6'd0: k_cidx = `CK;    // 'K'
+                    6'd1: k_cidx = `CB;    // 'B'
+                    6'd2: k_cidx = `CD;    // 'D'
+                    6'd3: k_cidx = `CGT;   // '>'
+                    6'd4: k_cidx = `CSP;   // ' '
+                    default: begin
+                        // cols 5..20: buffer (0..15) + cursor
+                        if (kcol >= 6'd5 && kcol <= 6'd20) begin
+                            if (kcol - 6'd5 < {2'b0, kb_buf_len})
+                                k_cidx = kbchar(kcol - 6'd5);       // buffer char
+                            else if ((kcol == k_cursor_col) && kb_cursor)
+                                k_cidx = `COR;                       // '|' cursor
+                            else
+                                k_cidx = `CSP;
+                        end else
+                            k_cidx = `CSP;
+                    end
+                endcase
+            end
+
+            // Row 2: status message at cols 0..14
+            5'd2: begin
+                if (kcol <= 6'd14)
+                    k_cidx = kmchar(kcol);
+                else
+                    k_cidx = `CSP;
+            end
+
+            default: k_cidx = `CSP;
+        endcase
+    end
+end
+
+wire [7:0] k_fbyte = fnt[{k_cidx, kfrow}];
+wire k_px = in_kbd && (krow5 != 5'd0) && k_fbyte[kfpx];
+
+// Keyboard area colors
+// Row 1 (input): bright cyan text
+// Row 2 (status): green=ok, red=error, dim-white=idle
+wire k_is_sep    = in_kbd && (krow5 == 5'd0);   // separator bar
+wire k_is_input  = in_kbd && (krow5 == 5'd1);   // input row
+wire k_is_status = in_kbd && (krow5 == 5'd2);   // status row
+
+wire [3:0] k_stat_r = (kb_status >= 4'd2) ? 4'hF : 4'h0;
+wire [3:0] k_stat_g = (kb_status == 4'd1) ? 4'hF :
+                      (kb_status == 4'd0) ? 4'h6 : 4'h0;
+wire [3:0] k_stat_b = 4'h0;
+
+// ============================================================
 // Separators
 // ============================================================
 // Left panel right edge: x=384..385  (moved from 560)
@@ -1358,40 +1488,61 @@ wire [3:0] txt_b = v_halted ? 4'h4 : 4'hF;
 //   highlighted row bg    : dark green (0, 2, 0)
 //   normal row text       : white  (F, F, F)
 //   normal row bg         : black  (0, 0, 0)
-assign vga_r = !active   ? 4'h0 :
-               l_px      ? txt_r :
-               sep_l     ? 4'h5 :
-               in_left   ? 4'h0 :
-               m_px&&mid_hl ? 4'h0 :      // highlight text: green (no red)
-               m_px         ? 4'hF :      // normal text: white
-               in_mid&&mid_hl ? 4'h0 :   // highlight bg: dark green (no red)
-               in_mid       ? 4'h0 :      // normal bg: black
-               px        ? txt_r :
-               sep_r     ? 4'h5 :
-               in_panel  ? 4'h0 : 4'h0;
+assign vga_r = !active        ? 4'h0 :
+               l_px           ? txt_r :
+               sep_l          ? 4'h5 :
+               in_left        ? 4'h0 :
+               // Keyboard area (below left panel, y=256..319)
+               k_is_sep       ? 4'h2 :                          // separator: dim gray
+               k_is_input&&k_px ? 4'h0 :                        // input text: cyan (no red)
+               k_is_input     ? 4'h0 :                          // input bg: black
+               k_is_status&&k_px ? k_stat_r :                   // status text: colored
+               k_is_status    ? 4'h0 :                          // status bg: black
+               in_kbd         ? 4'h0 :                          // other kbd rows: black
+               // Middle panel
+               m_px&&mid_hl   ? 4'h0 :
+               m_px           ? 4'hF :
+               in_mid&&mid_hl ? 4'h0 :
+               in_mid         ? 4'h0 :
+               // Right panel
+               px             ? txt_r :
+               sep_r          ? 4'h5 :
+               in_panel       ? 4'h0 : 4'h0;
 
-assign vga_g = !active   ? 4'h0 :
-               l_px      ? txt_g :
-               sep_l     ? 4'h5 :
-               in_left   ? 4'h0 :
-               m_px&&mid_hl ? 4'hF :      // highlight text: green (full)
-               m_px         ? 4'hF :      // normal text: white
-               in_mid&&mid_hl ? 4'h2 :   // highlight bg: dark green
-               in_mid       ? 4'h0 :      // normal bg: black
-               px        ? txt_g :
-               sep_r     ? 4'h5 :
-               in_panel  ? 4'h0 : 4'h0;
+assign vga_g = !active        ? 4'h0 :
+               l_px           ? txt_g :
+               sep_l          ? 4'h5 :
+               in_left        ? 4'h0 :
+               k_is_sep       ? 4'h2 :
+               k_is_input&&k_px ? 4'hF :                        // input text: cyan (full green)
+               k_is_input     ? 4'h0 :
+               k_is_status&&k_px ? k_stat_g :
+               k_is_status    ? 4'h0 :
+               in_kbd         ? 4'h0 :
+               m_px&&mid_hl   ? 4'hF :
+               m_px           ? 4'hF :
+               in_mid&&mid_hl ? 4'h2 :
+               in_mid         ? 4'h0 :
+               px             ? txt_g :
+               sep_r          ? 4'h5 :
+               in_panel       ? 4'h0 : 4'h0;
 
-assign vga_b = !active   ? 4'h0 :
-               l_px      ? txt_b :
-               sep_l     ? 4'h5 :
-               in_left   ? 4'h2 :
-               m_px&&mid_hl ? 4'h0 :      // highlight text: green (no blue)
-               m_px         ? 4'hF :      // normal text: white
-               in_mid&&mid_hl ? 4'h0 :   // highlight bg: dark green (no blue)
-               in_mid       ? 4'h0 :      // normal bg: black
-               px        ? txt_b :
-               sep_r     ? 4'h5 :
-               in_panel  ? 4'h2 : 4'h0;
+assign vga_b = !active        ? 4'h0 :
+               l_px           ? txt_b :
+               sep_l          ? 4'h5 :
+               in_left        ? 4'h2 :
+               k_is_sep       ? 4'h2 :
+               k_is_input&&k_px ? 4'hF :                        // input text: cyan (full blue)
+               k_is_input     ? 4'h0 :
+               k_is_status&&k_px ? k_stat_b :
+               k_is_status    ? 4'h0 :
+               in_kbd         ? 4'h0 :
+               m_px&&mid_hl   ? 4'h0 :
+               m_px           ? 4'hF :
+               in_mid&&mid_hl ? 4'h0 :
+               in_mid         ? 4'h0 :
+               px             ? txt_b :
+               sep_r          ? 4'h5 :
+               in_panel       ? 4'h2 : 4'h0;
 
 endmodule
