@@ -77,3 +77,9 @@ set_property IOSTANDARD LVCMOS33 [get_ports {sw[*]}]
 # btn_step = BTNC (N17): 单步触发
 set_property PACKAGE_PIN N17 [get_ports btn_step]
 set_property IOSTANDARD LVCMOS33 [get_ports btn_step]
+
+# PS/2 键盘接口 (Nexys 4 DDR, PIC24 HID Controller)
+# 手册要求: open-drain 驱动, FPGA 必须开启内部上拉 (PULLUP true)
+# 否则空闲时 ps2_clk/ps2_data 悬空读为 0, 无法检测边沿
+set_property -dict {PACKAGE_PIN F4 IOSTANDARD LVCMOS33 PULLUP true} [get_ports ps2_clk]
+set_property -dict {PACKAGE_PIN B2 IOSTANDARD LVCMOS33 PULLUP true} [get_ports ps2_data]

@@ -22,6 +22,9 @@ module ALL_top (
     input  wire        btn_step,
     output wire [7:0]  AN,
     output wire [6:0]  SEG,
+    // PS2 keyboard
+    input  wire        ps2_clk,
+    input  wire        ps2_data,
     // VGA outputs
     output wire        vga_hs,
     output wire        vga_vs,
@@ -38,6 +41,21 @@ module ALL_top (
     wire        scan_done, scan_wr_en;
     wire [7:0]  scan_wr_addr, scan_count;
     wire [15:0] scan_wr_data;
+
+    // PS2 keyboard decoder wires
+    wire [7:0]  ps2_key_data;
+    wire        ps2_key_valid;
+    wire        ps2_char_valid;
+    wire [5:0]  ps2_char_data;
+    wire        ps2_is_enter;
+    wire        ps2_is_backspace;
+    wire        ps2_is_tab;
+    wire [7:0]  ps2_last_scan;
+
+    // Keyboard instruction injection wires
+    wire        inj_req;
+    wire [15:0] inj_instr;
+    wire        inj_done;
 
     // ---- SW 2-stage synchronizer (metastability) ----
     (* ASYNC_REG = "TRUE" *) reg [15:0] sw_s1, sw_s2;
@@ -82,7 +100,33 @@ module ALL_top (
         .scan_wr_en   (scan_wr_en),
         .scan_wr_addr (scan_wr_addr),
         .scan_wr_data (scan_wr_data),
-        .scan_count   (scan_count)
+        .scan_count   (scan_count),
+        .inject_req   (inj_req),
+        .inject_instr (inj_instr),
+        .inject_done  (inj_done)
+    );
+
+    PS2_receiver u_ps2_rx (
+        .clk      (clk),
+        .rst      (reset),
+        .ps2_clk  (ps2_clk),
+        .ps2_data (ps2_data),
+        .key_data (ps2_key_data),
+        .key_valid(ps2_key_valid),
+        .parity_error()
+    );
+
+    ps2_decoder u_ps2_dec (
+        .clk         (clk),
+        .rst         (reset),
+        .key_data    (ps2_key_data),
+        .key_valid   (ps2_key_valid),
+        .char_valid  (ps2_char_valid),
+        .char_data   (ps2_char_data),
+        .is_enter    (ps2_is_enter),
+        .is_backspace(ps2_is_backspace),
+        .is_tab      (ps2_is_tab),
+        .last_scan   (ps2_last_scan)
     );
 
     seven_seg_decimal seg_disp (
@@ -94,22 +138,31 @@ module ALL_top (
     );
 
     vga_display vga (
-        .clk          (clk),
-        .reset        (reset),
-        .video_bus    (video_bus),
-        .exec_mode    (exec_mode),
-        .capture_pulse(capture_pulse),
-        .snap_car     (snap_car),
-        .scan_done    (scan_done),
-        .scan_wr_en   (scan_wr_en),
-        .scan_wr_addr (scan_wr_addr),
-        .scan_wr_data (scan_wr_data),
-        .scan_count   (scan_count),
-        .vga_hs       (vga_hs),
-        .vga_vs       (vga_vs),
-        .vga_r        (vga_r),
-        .vga_g        (vga_g),
-        .vga_b        (vga_b)
+        .clk             (clk),
+        .reset           (reset),
+        .video_bus       (video_bus),
+        .exec_mode       (exec_mode),
+        .capture_pulse   (capture_pulse),
+        .snap_car        (snap_car),
+        .scan_done       (scan_done),
+        .scan_wr_en      (scan_wr_en),
+        .scan_wr_addr    (scan_wr_addr),
+        .scan_wr_data    (scan_wr_data),
+        .scan_count      (scan_count),
+        .ps2_char_valid  (ps2_char_valid),
+        .ps2_char_data   (ps2_char_data),
+        .ps2_is_enter    (ps2_is_enter),
+        .ps2_is_backspace(ps2_is_backspace),
+        .ps2_is_tab      (ps2_is_tab),
+        .ps2_last_scan   (ps2_last_scan),
+        .inj_req         (inj_req),
+        .inj_instr       (inj_instr),
+        .inj_done        (inj_done),
+        .vga_hs          (vga_hs),
+        .vga_vs          (vga_vs),
+        .vga_r           (vga_r),
+        .vga_g           (vga_g),
+        .vga_b           (vga_b)
     );
 
 endmodule

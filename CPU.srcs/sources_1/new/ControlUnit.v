@@ -53,7 +53,11 @@ module ControlUnit (
     output wire        can_step,      // step gate: tell CPU_top whether to execute
     // VGA history capture
     output reg         capture_pulse, // 1-cycle negedge pulse → push ring buffer
-    output reg  [7:0]  snap_car       // CAR latched before advance (micro-step)
+    output reg  [7:0]  snap_car,      // CAR latched before advance (micro-step)
+    // Keyboard instruction injection
+    input  wire        inject_req,    // held high by vga_display while injection pending
+    output reg         inject_done,   // 1-cycle pulse when injected instruction completes
+    output reg         injecting      // high for entire duration of injected fetch+execute
 );
 
     // ---- Extract sequencing control bits ----
@@ -69,10 +73,17 @@ module ControlUnit (
     //               cleared when C2 fires (instruction boundary reached)
     reg instr_running;
 
+    // Edge-detect inject_req to create a one-shot trigger (like step_pulse)
+    reg inject_req_prev;
+    always @(posedge clk or posedge reset)
+        if (reset) inject_req_prev <= 1'b0;
+        else       inject_req_prev <= inject_req;
+    wire inject_trigger = inject_req && !inject_req_prev;
+
     assign can_step =
-        (exec_mode == 2'b00) ||                                // free-run
-        (exec_mode == 2'b01 && (instr_running || step_pulse)) || // instr-step
-        (exec_mode == 2'b10 && step_pulse);                    // micro-step
+        (exec_mode == 2'b00) ||                                           // free-run
+        (exec_mode == 2'b01 && (instr_running || step_pulse || inject_trigger)) || // instr-step
+        (exec_mode == 2'b10 && step_pulse);                               // micro-step
 
     // ---- Dispatch function: opcode -> CAR start address ----
     function [7:0] dispatch;
@@ -100,15 +111,29 @@ module ControlUnit (
     always @(posedge clk or posedge reset) begin
         if (reset) begin
             instr_running <= 1'b0;
+            injecting     <= 1'b0;
+            inject_done   <= 1'b0;
         end else begin
-      // instr_running state machine (only meaningful in mode 01)
-                if (exec_mode == 2'b01) begin
-                    if (C2 && instr_running)
-                        instr_running <= step_pulse;
-                    else if (!instr_running && step_pulse)
-                        instr_running <= 1'b1;
-                end else
-                    instr_running <= 1'b0;
+            inject_done <= 1'b0;  // default: no pulse
+
+            // instr_running state machine (only meaningful in mode 01)
+            if (exec_mode == 2'b01) begin
+                if (C2 && instr_running)
+                    instr_running <= step_pulse;
+                else if (!instr_running && step_pulse)
+                    instr_running <= 1'b1;
+                else if (!instr_running && inject_trigger)
+                    instr_running <= 1'b1;  // inject trigger starts instruction
+            end else
+                instr_running <= 1'b0;
+
+            // injecting flag: set on inject_trigger, cleared when instruction ends
+            if (inject_trigger && !instr_running)
+                injecting <= 1'b1;
+            else if (C2 && injecting) begin
+                injecting   <= 1'b0;
+                inject_done <= 1'b1;  // 1-cycle pulse
+            end
         end
     end
     // ---- CAR update logic (with single-step gating) ----

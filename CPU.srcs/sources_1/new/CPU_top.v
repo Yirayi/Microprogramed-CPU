@@ -102,7 +102,11 @@ module CPU_top (
     output reg         scan_wr_en,         // 1-cycle write strobe
     output reg  [7:0]  scan_wr_addr,       // write address (= PC index)
     output reg  [15:0] scan_wr_data,       // instruction word {opcode, operand}
-    output wire [7:0]  scan_count          // = scan_addr+1 when done (wire, no extra reg)
+    output wire [7:0]  scan_count,         // = scan_addr+1 when done (wire, no extra reg)
+    // Keyboard instruction injection
+    input  wire        inject_req,         // held high by vga_display while injection pending
+    input  wire [15:0] inject_instr,       // instruction word to inject {opcode, operand}
+    output wire        inject_done         // 1-cycle pulse when injected instruction completes
 );
     wire clks=~clk;
     // -------------------------------------------------------
@@ -139,6 +143,7 @@ module CPU_top (
     wire [7:0]  car;
     wire [31:0] micro_instr;
     wire can_step;
+    wire injecting_w;
     ControlUnit cu (
         .clk          (clk),
         .reset        (cpu_reset),
@@ -150,7 +155,10 @@ module CPU_top (
         .step_pulse   (step_pulse),
         .can_step     (can_step),
         .capture_pulse(capture_pulse),
-        .snap_car     (snap_car)
+        .snap_car     (snap_car),
+        .inject_req   (inject_req),
+        .inject_done  (inject_done),
+        .injecting    (injecting_w)
     );
 
     // -------------------------------------------------------
@@ -341,7 +349,8 @@ module CPU_top (
     
                 // ---- MBR updates ----
                 // C3, C11, C26 never assert in the same micro-cycle.
-                if      (C3 && is_fetch) MBR <= im_dout;     // fetch: read IM
+                if      (C3 && is_fetch && injecting_w) MBR <= inject_instr; // inject path
+                else if (C3 && is_fetch) MBR <= im_dout;     // fetch: read IM
                 else if (C3)             MBR <= dm_dout;     // execute: read DM
                 else if (C11)            MBR <= ACC;         // STORE: capture ACC
                 else if (C26)            MBR <= port_in[MAR[1:0]]; // IN: read port
@@ -353,9 +362,10 @@ module CPU_top (
                 // C6 (PC+1) happens in fetch T3.
                 // C22 (JMP) and C23 (JMPGEZ) happen in a single execute cycle.
                 // C6 never combines with C22/C23 in the same micro-cycle.
-                if      (C22)               PC <= MAR;
-                else if (C23 && !ACC[15])   PC <= MAR;   // JMPGEZ: only if ACC>=0
-                else if (C6)                PC <= PC + 8'h01;
+                // C6 is suppressed during injection so PC is preserved.
+                if      (C22)                    PC <= MAR;
+                else if (C23 && !ACC[15])        PC <= MAR;   // JMPGEZ: only if ACC>=0
+                else if (C6 && !injecting_w)     PC <= PC + 8'h01;
     
                 // ---- BR update ----
                 if (C7) BR <= MBR;
