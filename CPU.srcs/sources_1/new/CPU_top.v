@@ -94,6 +94,9 @@ module CPU_top (
     // single-step debug controls (from ALL_top / switches+button)
     input  wire [1:0]  exec_mode,          // 00=run 01=instr-step 10=micro-step
     input  wire        step_pulse,         // single-cycle trigger from BTNC
+    // Keyboard instruction injection (single-step mode only)
+    input  wire        inj_valid,          // 1-cycle pulse: latch injected instruction
+    input  wire [15:0] inj_word,           // {opcode[7:0], operand[7:0]}
     // VGA history capture signals
     output wire        capture_pulse,      // 1-cycle pulse: push to VGA ring buffer
     output wire [7:0]  snap_car,           // pre-advance CAR for micro-step display
@@ -105,6 +108,14 @@ module CPU_top (
     output wire [7:0]  scan_count          // = scan_addr+1 when done (wire, no extra reg)
 );
     wire clks=~clk;
+
+    // -------------------------------------------------------
+    // Instruction injection registers
+    // Latched on inj_valid pulse; consumed when C3 fires during fetch T2.
+    // -------------------------------------------------------
+    reg        inj_pending;
+    reg [15:0] inj_held;
+
     // -------------------------------------------------------
     // Internal registers
     // -------------------------------------------------------
@@ -322,6 +333,21 @@ module CPU_top (
     // -------------------------------------------------------
     // Register update: all registers clocked on posedge
     // -------------------------------------------------------
+    // Injection latch: capture inj_word on inj_valid, clear after fetch T2 uses it
+    always @(posedge clk or posedge cpu_reset) begin
+        if (cpu_reset) begin
+            inj_pending <= 1'b0;
+            inj_held    <= 16'h0;
+        end else begin
+            if (inj_valid) begin
+                inj_pending <= 1'b1;
+                inj_held    <= inj_word;
+            end else if (can_step && C3 && is_fetch) begin
+                inj_pending <= 1'b0;   // consumed
+            end
+        end
+    end
+
     always @(posedge clk or posedge cpu_reset) begin
         if (cpu_reset) begin
             MAR       <= 8'h00;
@@ -338,10 +364,11 @@ module CPU_top (
                 // C10 and C5 never assert in the same micro-cycle.
                 if      (C10) MAR <= PC;
                 else if (C5)  MAR <= MBR[7:0];
-    
+
                 // ---- MBR updates ----
                 // C3, C11, C26 never assert in the same micro-cycle.
-                if      (C3 && is_fetch) MBR <= im_dout;     // fetch: read IM
+                // When inj_pending: override IM output with injected word during fetch T2.
+                if      (C3 && is_fetch) MBR <= inj_pending ? inj_held : im_dout;
                 else if (C3)             MBR <= dm_dout;     // execute: read DM
                 else if (C11)            MBR <= ACC;         // STORE: capture ACC
                 else if (C26)            MBR <= port_in[MAR[1:0]]; // IN: read port
