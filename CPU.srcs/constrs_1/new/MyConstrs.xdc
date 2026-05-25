@@ -77,3 +77,22 @@ set_property IOSTANDARD LVCMOS33 [get_ports {sw[*]}]
 # btn_step = BTNC (N17): 单步触发
 set_property PACKAGE_PIN N17 [get_ports btn_step]
 set_property IOSTANDARD LVCMOS33 [get_ports btn_step]
+
+# LED 调试输出 (Nexys 4 DDR LD0-LD8)
+# led[7:0] = 最近收到的 PS/2 扫描码（二进制）
+# led[8]   = 闩锁：只要收到过任何 key_valid 脉冲就亮起，复位后清零
+set_property -dict {PACKAGE_PIN H17 IOSTANDARD LVCMOS33} [get_ports {led[0]}]
+set_property -dict {PACKAGE_PIN K15 IOSTANDARD LVCMOS33} [get_ports {led[1]}]
+set_property -dict {PACKAGE_PIN J13 IOSTANDARD LVCMOS33} [get_ports {led[2]}]
+set_property -dict {PACKAGE_PIN N14 IOSTANDARD LVCMOS33} [get_ports {led[3]}]
+set_property -dict {PACKAGE_PIN R18 IOSTANDARD LVCMOS33} [get_ports {led[4]}]
+set_property -dict {PACKAGE_PIN V17 IOSTANDARD LVCMOS33} [get_ports {led[5]}]
+set_property -dict {PACKAGE_PIN U17 IOSTANDARD LVCMOS33} [get_ports {led[6]}]
+set_property -dict {PACKAGE_PIN U16 IOSTANDARD LVCMOS33} [get_ports {led[7]}]
+set_property -dict {PACKAGE_PIN V16 IOSTANDARD LVCMOS33} [get_ports {led[8]}]
+
+# PS/2 键盘接口 (Nexys 4 DDR, PIC24 HID Controller)
+# 手册要求: open-drain 驱动, FPGA 必须开启内部上拉 (PULLUP true)
+# 否则空闲时 ps2_clk/ps2_data 悬空读为 0, 无法检测边沿
+set_property -dict {PACKAGE_PIN F4 IOSTANDARD LVCMOS33 PULLUP true} [get_ports ps2_clk]
+set_property -dict {PACKAGE_PIN B2 IOSTANDARD LVCMOS33 PULLUP true} [get_ports ps2_data]

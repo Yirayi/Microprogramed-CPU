@@ -85,6 +85,13 @@ module vga_display (
     input  wire [7:0]  scan_wr_addr,
     input  wire [15:0] scan_wr_data,
     input  wire [7:0]  scan_count,
+    // PS2 keyboard input (from ps2_decoder)
+    input  wire        ps2_char_valid,
+    input  wire [5:0]  ps2_char_data,
+    input  wire        ps2_is_enter,
+    input  wire        ps2_is_backspace,
+    input  wire        ps2_is_tab,
+    input  wire [7:0]  ps2_last_scan,
     output wire        vga_hs,
     output wire        vga_vs,
     output wire [3:0]  vga_r,
@@ -535,6 +542,19 @@ initial begin
         hist[hist_init_i] = 17'h0;
 end
 
+// ============================================================
+// Bottom-left input panel state
+// ============================================================
+reg        area_sel;               // 0 = BL input area (Tab toggles)
+reg [5:0]  input_buf  [0:31];      // current input line, up to 32 chars (font indices)
+reg [5:0]  input_pos;              // cursor position 0..32
+reg [5:0]  input_hist [0:15][0:31]; // history: 16 lines × 32 chars (font indices)
+reg [3:0]  input_hist_head;        // next write row (mod-16 auto-wraps)
+reg [4:0]  input_hist_count;       // valid history lines 0..16
+reg [5:0]  blink_cnt;              // counts VGA frames for cursor blink
+reg        blink_on;               // cursor visibility flag
+integer    bl_i;
+
 // Capture: negedge-generated capture_pulse, resync to posedge domain
 reg  cap_d1;
 always @(posedge clk or posedge reset) begin
@@ -549,6 +569,60 @@ always @(posedge clk or posedge reset) begin
             else
                 hist[hist_head] <= {1'b1, snap_car, 8'h0};
             hist_head <= hist_head + 1'd1;
+        end
+    end
+end
+
+// ============================================================
+// BL panel: input buffer and history logic
+// ============================================================
+always @(posedge clk or posedge reset) begin
+    if (reset) begin
+        area_sel         <= 1'b0;
+        input_pos        <= 6'd0;
+        input_hist_head  <= 4'd0;
+        input_hist_count <= 5'd0;
+        blink_cnt        <= 6'd0;
+        blink_on         <= 1'b1;
+        for (bl_i = 0; bl_i < 32; bl_i = bl_i + 1)
+            input_buf[bl_i] <= `CSP;
+    end else begin
+        // Cursor blink: increment at VGA vertical blanking start (once per frame ~60Hz)
+        if (pclk_en && hc == 10'd0 && vc == V_ACT) begin
+            if (blink_cnt == 6'd29) begin
+                blink_cnt <= 6'd0;
+                blink_on  <= ~blink_on;
+            end else
+                blink_cnt <= blink_cnt + 6'd1;
+        end
+
+        // Tab: cycle area selection
+        if (ps2_is_tab) area_sel <= ~area_sel;
+
+        // Accept keyboard input only in single-step mode (01) and area 0
+        if (exec_mode == 2'b01 && area_sel == 1'b0) begin
+            if (ps2_char_valid && input_pos < 6'd32) begin
+                input_buf[input_pos] <= ps2_char_data;
+                input_pos <= input_pos + 6'd1;
+            end
+            if (ps2_is_backspace && input_pos > 6'd0)
+                input_pos <= input_pos - 6'd1;
+            if (ps2_is_enter) begin
+                // Save current line to history ring buffer
+                for (bl_i = 0; bl_i < 32; bl_i = bl_i + 1) begin
+                    if (bl_i < input_pos)
+                        input_hist[input_hist_head][bl_i] <= input_buf[bl_i];
+                    else
+                        input_hist[input_hist_head][bl_i] <= `CSP;
+                end
+                input_hist_head  <= input_hist_head + 4'd1;
+                if (input_hist_count < 5'd16)
+                    input_hist_count <= input_hist_count + 5'd1;
+                // Clear input buffer
+                for (bl_i = 0; bl_i < 32; bl_i = bl_i + 1)
+                    input_buf[bl_i] <= `CSP;
+                input_pos <= 6'd0;
+            end
         end
     end
 end
@@ -1261,6 +1335,67 @@ wire [7:0] l_fbyte = fnt[{l_cidx, lfrow}];
 wire l_px = in_left && l_fbyte[lfpx];
 
 // ============================================================
+// BOTTOM-LEFT panel: x=[0,384), y=[256,480) – 48 chars × 28 rows
+//   rows  0-15: entered instruction history (oldest→newest)
+//   row  16:    separator line (dashes)
+//   rows 17-23: unused (blank)
+//   row  24:    current input line  "> [text] |cursor"
+//   row  25:    blank
+//   row  26:    debug: last PS2 scan code at cols 40-43 "K:XX"
+//   row  27:    blank
+// ============================================================
+wire in_bl    = active && (hc < 10'd384) && (vc >= 10'd256);
+wire [5:0] bl_col  = hc[8:3];                   // 0..47
+wire [9:0] bl_vc_off = vc - 10'd256;
+wire [4:0] bl_row  = bl_vc_off[7:3];            // 0..27
+wire [2:0] bl_fpx  = hc[2:0];
+wire [2:0] bl_frow = vc[2:0];
+
+// History ring buffer read index: show oldest entry at bl_row=0
+wire [3:0] hist_disp_idx  = input_hist_head - input_hist_count[3:0] + bl_row[3:0];
+wire       hist_row_valid  = (bl_row <= 5'd15) && ({1'b0, bl_row} < input_hist_count);
+
+// BL character decode (combinational)
+reg [5:0] bl_cidx;
+always @(*) begin
+    bl_cidx = `CSP;
+    if (in_bl) begin
+        if (bl_row <= 5'd15) begin
+            // History rows
+            if (hist_row_valid && bl_col < 6'd32)
+                bl_cidx = input_hist[hist_disp_idx][bl_col[4:0]];
+        end else if (bl_row == 5'd16) begin
+            // Separator: draw '-' across first 32 cols
+            bl_cidx = (bl_col < 6'd32) ? `CMIN : `CSP;
+        end else if (bl_row == 5'd24) begin
+            // Input line: "> text cursor"
+            if (bl_col == 6'd0)
+                bl_cidx = `CGT; // '>' prompt
+            else if (bl_col >= 6'd1 && bl_col <= input_pos && bl_col <= 6'd32)
+                bl_cidx = input_buf[bl_col - 6'd1];
+            else if (bl_col == input_pos + 6'd1 && bl_col <= 6'd33)
+                bl_cidx = blink_on ? `COR : `CSP; // blinking '|' cursor
+        end else if (bl_row == 5'd26) begin
+            // Debug: show "K:XX" (last PS2 scan code) right-aligned at cols 40-43
+            case (bl_col)
+                6'd40: bl_cidx = `CK;
+                6'd41: bl_cidx = `CCOL;
+                6'd42: bl_cidx = {2'b0, ps2_last_scan[7:4]};
+                6'd43: bl_cidx = {2'b0, ps2_last_scan[3:0]};
+                default: bl_cidx = `CSP;
+            endcase
+        end
+    end
+end
+
+wire [7:0] bl_fbyte = fnt[{bl_cidx, bl_frow}];
+wire bl_px = in_bl && bl_fbyte[bl_fpx];
+// Separator row flag for color control
+wire bl_sep_row = in_bl && (bl_row == 5'd16);
+// Debug row flag for yellow text
+wire bl_dbg_row = in_bl && (bl_row == 5'd26);
+
+// ============================================================
 // MIDDLE panel: x=[392,560), y=[0,480)  –  21 chars × 60 rows
 // Static instruction listing from InstructionMemory scan.
 // Format per row: > XX  MMMMMM [OO]
@@ -1358,40 +1493,55 @@ wire [3:0] txt_b = v_halted ? 4'h4 : 4'hF;
 //   highlighted row bg    : dark green (0, 2, 0)
 //   normal row text       : white  (F, F, F)
 //   normal row bg         : black  (0, 0, 0)
-assign vga_r = !active   ? 4'h0 :
-               l_px      ? txt_r :
-               sep_l     ? 4'h5 :
-               in_left   ? 4'h0 :
-               m_px&&mid_hl ? 4'h0 :      // highlight text: green (no red)
-               m_px         ? 4'hF :      // normal text: white
-               in_mid&&mid_hl ? 4'h0 :   // highlight bg: dark green (no red)
-               in_mid       ? 4'h0 :      // normal bg: black
-               px        ? txt_r :
-               sep_r     ? 4'h5 :
-               in_panel  ? 4'h0 : 4'h0;
+assign vga_r = !active        ? 4'h0 :
+               l_px           ? txt_r :
+               sep_l          ? 4'h5 :
+               in_left        ? 4'h0 :
+               bl_px&&bl_dbg_row ? 4'hF :   // BL debug row text: yellow (R=F)
+               bl_px&&bl_sep_row ? 4'h3 :   // BL separator text: dim
+               bl_px          ? 4'hF :      // BL text: white
+               bl_sep_row     ? 4'h1 :      // BL separator bg: very dim
+               in_bl          ? 4'h0 :      // BL bg: black
+               m_px&&mid_hl   ? 4'h0 :      // highlight text: green (no red)
+               m_px           ? 4'hF :      // normal text: white
+               in_mid&&mid_hl ? 4'h0 :      // highlight bg: dark green (no red)
+               in_mid         ? 4'h0 :      // normal bg: black
+               px             ? txt_r :
+               sep_r          ? 4'h5 :
+               in_panel       ? 4'h0 : 4'h0;
 
-assign vga_g = !active   ? 4'h0 :
-               l_px      ? txt_g :
-               sep_l     ? 4'h5 :
-               in_left   ? 4'h0 :
-               m_px&&mid_hl ? 4'hF :      // highlight text: green (full)
-               m_px         ? 4'hF :      // normal text: white
-               in_mid&&mid_hl ? 4'h2 :   // highlight bg: dark green
-               in_mid       ? 4'h0 :      // normal bg: black
-               px        ? txt_g :
-               sep_r     ? 4'h5 :
-               in_panel  ? 4'h0 : 4'h0;
+assign vga_g = !active        ? 4'h0 :
+               l_px           ? txt_g :
+               sep_l          ? 4'h5 :
+               in_left        ? 4'h0 :
+               bl_px&&bl_dbg_row ? 4'hF :   // BL debug row text: yellow (G=F)
+               bl_px&&bl_sep_row ? 4'h3 :   // BL separator text: dim
+               bl_px          ? 4'hF :      // BL text: white
+               bl_sep_row     ? 4'h1 :      // BL separator bg: very dim
+               in_bl          ? 4'h0 :      // BL bg: black
+               m_px&&mid_hl   ? 4'hF :      // highlight text: green (full)
+               m_px           ? 4'hF :      // normal text: white
+               in_mid&&mid_hl ? 4'h2 :      // highlight bg: dark green
+               in_mid         ? 4'h0 :      // normal bg: black
+               px             ? txt_g :
+               sep_r          ? 4'h5 :
+               in_panel       ? 4'h0 : 4'h0;
 
-assign vga_b = !active   ? 4'h0 :
-               l_px      ? txt_b :
-               sep_l     ? 4'h5 :
-               in_left   ? 4'h2 :
-               m_px&&mid_hl ? 4'h0 :      // highlight text: green (no blue)
-               m_px         ? 4'hF :      // normal text: white
-               in_mid&&mid_hl ? 4'h0 :   // highlight bg: dark green (no blue)
-               in_mid       ? 4'h0 :      // normal bg: black
-               px        ? txt_b :
-               sep_r     ? 4'h5 :
-               in_panel  ? 4'h2 : 4'h0;
+assign vga_b = !active        ? 4'h0 :
+               l_px           ? txt_b :
+               sep_l          ? 4'h5 :
+               in_left        ? 4'h2 :
+               bl_px&&bl_dbg_row ? 4'h0 :   // BL debug row text: yellow (B=0)
+               bl_px&&bl_sep_row ? 4'h3 :   // BL separator text: dim
+               bl_px          ? 4'hF :      // BL text: white
+               bl_sep_row     ? 4'h1 :      // BL separator bg: very dim
+               in_bl          ? 4'h0 :      // BL bg: black
+               m_px&&mid_hl   ? 4'h0 :      // highlight text: green (no blue)
+               m_px           ? 4'hF :      // normal text: white
+               in_mid&&mid_hl ? 4'h0 :      // highlight bg: dark green (no blue)
+               in_mid         ? 4'h0 :      // normal bg: black
+               px             ? txt_b :
+               sep_r          ? 4'h5 :
+               in_panel       ? 4'h2 : 4'h0;
 
 endmodule

@@ -11,19 +11,18 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="502.430 ns"></ZoomStartTime>
-      <ZoomEndTime time="995.362 ns"></ZoomEndTime>
-      <Cursor1Time time="246.940 ns"></Cursor1Time>
+      <ZoomStartTime time="0.000000 us"></ZoomStartTime>
+      <ZoomEndTime time="3,949.668166 us"></ZoomEndTime>
+      <Cursor1Time time="1.000000 us"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="342"></NameColumnWidth>
-      <ValueColumnWidth column_width="211"></ValueColumnWidth>
+      <ValueColumnWidth column_width="191"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="10" />
+   <WVObjectSize size="11" />
    <wvobject fp_name="group14" type="group">
       <obj_property name="label">ExtCtrl</obj_property>
       <obj_property name="DisplayName">label</obj_property>
-      <obj_property name="isExpanded"></obj_property>
       <wvobject fp_name="/sim_LaunchCPU/btn_step" type="logic">
          <obj_property name="ElementShortName">btn_step</obj_property>
          <obj_property name="ObjectShortName">btn_step</obj_property>
@@ -67,6 +66,63 @@
          <obj_property name="ObjectShortName">exec_mode[1:0]</obj_property>
          <obj_property name="CustomSignalColor">#FFFFFF</obj_property>
          <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject fp_name="group226" type="group">
+      <obj_property name="label">Keyboard</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+      <wvobject fp_name="/sim_LaunchCPU/dut/u_ps2_dec/last_scan" type="array">
+         <obj_property name="ElementShortName">last_scan[7:0]</obj_property>
+         <obj_property name="ObjectShortName">last_scan[7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/sim_LaunchCPU/ps2_clk_tb" type="logic">
+         <obj_property name="ElementShortName">ps2_clk_tb</obj_property>
+         <obj_property name="ObjectShortName">ps2_clk_tb</obj_property>
+      </wvobject>
+      <wvobject fp_name="/sim_LaunchCPU/ps2_data_tb" type="logic">
+         <obj_property name="ElementShortName">ps2_data_tb</obj_property>
+         <obj_property name="ObjectShortName">ps2_data_tb</obj_property>
+      </wvobject>
+      <wvobject fp_name="/sim_LaunchCPU/dut/u_ps2_rx/key_data" type="array">
+         <obj_property name="ElementShortName">key_data[7:0]</obj_property>
+         <obj_property name="ObjectShortName">key_data[7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/sim_LaunchCPU/dut/u_ps2_rx/bit_count" type="array">
+         <obj_property name="ElementShortName">bit_count[3:0]</obj_property>
+         <obj_property name="ObjectShortName">bit_count[3:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/sim_LaunchCPU/dut/u_ps2_rx/key_valid" type="logic">
+         <obj_property name="ElementShortName">key_valid</obj_property>
+         <obj_property name="ObjectShortName">key_valid</obj_property>
+      </wvobject>
+      <wvobject fp_name="/sim_LaunchCPU/dut/u_ps2_dec/char_valid" type="logic">
+         <obj_property name="ElementShortName">char_valid</obj_property>
+         <obj_property name="ObjectShortName">char_valid</obj_property>
+      </wvobject>
+      <wvobject fp_name="/sim_LaunchCPU/dut/u_ps2_dec/is_enter" type="logic">
+         <obj_property name="ElementShortName">is_enter</obj_property>
+         <obj_property name="ObjectShortName">is_enter</obj_property>
+      </wvobject>
+      <wvobject fp_name="/sim_LaunchCPU/dut/led" type="array">
+         <obj_property name="ElementShortName">led[8:0]</obj_property>
+         <obj_property name="ObjectShortName">led[8:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/sim_LaunchCPU/dut/vga/input_pos" type="array">
+         <obj_property name="ElementShortName">input_pos[5:0]</obj_property>
+         <obj_property name="ObjectShortName">input_pos[5:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/sim_LaunchCPU/dut/vga/input_hist_count" type="array">
+         <obj_property name="ElementShortName">input_hist_count[4:0]</obj_property>
+         <obj_property name="ObjectShortName">input_hist_count[4:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/sim_LaunchCPU/dut/vga/input_hist" type="array">
+         <obj_property name="ElementShortName">input_hist[0:15][0:31][5:0]</obj_property>
+         <obj_property name="ObjectShortName">input_hist[0:15][0:31][5:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/sim_LaunchCPU/dut/vga/ps2_last_scan" type="array">
+         <obj_property name="ElementShortName">ps2_last_scan[7:0]</obj_property>
+         <obj_property name="ObjectShortName">ps2_last_scan[7:0]</obj_property>
       </wvobject>
    </wvobject>
    <wvobject fp_name="group19" type="group">
@@ -114,7 +170,6 @@
    <wvobject fp_name="group32" type="group">
       <obj_property name="label">Instr_scan</obj_property>
       <obj_property name="DisplayName">label</obj_property>
-      <obj_property name="isExpanded"></obj_property>
       <wvobject fp_name="/sim_LaunchCPU/dut/cpu/scan_done" type="logic">
          <obj_property name="ElementShortName">scan_done</obj_property>
          <obj_property name="ObjectShortName">scan_done</obj_property>
