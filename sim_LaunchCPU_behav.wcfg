@@ -11,15 +11,15 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="502.430 ns"></ZoomStartTime>
-      <ZoomEndTime time="995.362 ns"></ZoomEndTime>
-      <Cursor1Time time="246.940 ns"></Cursor1Time>
+      <ZoomStartTime time="628.000 ns"></ZoomStartTime>
+      <ZoomEndTime time="1,020.001 ns"></ZoomEndTime>
+      <Cursor1Time time="605.877 ns"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="342"></NameColumnWidth>
-      <ValueColumnWidth column_width="211"></ValueColumnWidth>
+      <ValueColumnWidth column_width="181"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="10" />
+   <WVObjectSize size="12" />
    <wvobject fp_name="group14" type="group">
       <obj_property name="label">ExtCtrl</obj_property>
       <obj_property name="DisplayName">label</obj_property>
@@ -45,10 +45,14 @@
       <wvobject fp_name="/sim_LaunchCPU/dut/cpu/internal_reset" type="logic">
          <obj_property name="ElementShortName">internal_reset</obj_property>
          <obj_property name="ObjectShortName">internal_reset</obj_property>
+         <obj_property name="CustomSignalColor">#FFFFFF</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
       </wvobject>
       <wvobject fp_name="/sim_LaunchCPU/dut/cpu/cpu_reset" type="logic">
          <obj_property name="ElementShortName">cpu_reset</obj_property>
          <obj_property name="ObjectShortName">cpu_reset</obj_property>
+         <obj_property name="CustomSignalColor">#FFFFFF</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
       </wvobject>
       <wvobject fp_name="/sim_LaunchCPU/sw" type="array">
          <obj_property name="ElementShortName">sw[15:0]</obj_property>
@@ -72,6 +76,7 @@
    <wvobject fp_name="group19" type="group">
       <obj_property name="label">CU</obj_property>
       <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
       <wvobject fp_name="/sim_LaunchCPU/dut/cpu/cu/cu_command" type="array">
          <obj_property name="ElementShortName">cu_command[127:0]</obj_property>
          <obj_property name="ObjectShortName">cu_command[127:0]</obj_property>
@@ -114,7 +119,6 @@
    <wvobject fp_name="group32" type="group">
       <obj_property name="label">Instr_scan</obj_property>
       <obj_property name="DisplayName">label</obj_property>
-      <obj_property name="isExpanded"></obj_property>
       <wvobject fp_name="/sim_LaunchCPU/dut/cpu/scan_done" type="logic">
          <obj_property name="ElementShortName">scan_done</obj_property>
          <obj_property name="ObjectShortName">scan_done</obj_property>
@@ -124,6 +128,8 @@
       <wvobject fp_name="/sim_LaunchCPU/dut/cpu/scan_state" type="array">
          <obj_property name="ElementShortName">scan_state[1:0]</obj_property>
          <obj_property name="ObjectShortName">scan_state[1:0]</obj_property>
+         <obj_property name="CustomSignalColor">#00FFFF</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
       </wvobject>
       <wvobject fp_name="/sim_LaunchCPU/dut/cpu/scan_wr_en" type="logic">
          <obj_property name="ElementShortName">scan_wr_en</obj_property>
@@ -152,14 +158,96 @@
       <wvobject fp_name="/sim_LaunchCPU/dut/cpu/scan_addr" type="array">
          <obj_property name="ElementShortName">scan_addr[7:0]</obj_property>
          <obj_property name="ObjectShortName">scan_addr[7:0]</obj_property>
+         <obj_property name="CustomSignalColor">#00FFFF</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
       </wvobject>
       <wvobject fp_name="/sim_LaunchCPU/dut/cpu/im_dout" type="array">
          <obj_property name="ElementShortName">im_dout[15:0]</obj_property>
          <obj_property name="ObjectShortName">im_dout[15:0]</obj_property>
+         <obj_property name="CustomSignalColor">#00FFFF</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
       </wvobject>
       <wvobject fp_name="/sim_LaunchCPU/dut/vga/instr_rom" type="array">
          <obj_property name="ElementShortName">instr_rom[0:255][15:0]</obj_property>
          <obj_property name="ObjectShortName">instr_rom[0:255][15:0]</obj_property>
+         <obj_property name="CustomSignalColor">#00FFFF</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+         <obj_property name="isExpanded"></obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject fp_name="group384" type="group">
+      <obj_property name="label">keyboard</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <wvobject fp_name="/sim_LaunchCPU/dut/u_ps2_rx/ps2_clk" type="logic">
+         <obj_property name="ElementShortName">ps2_clk</obj_property>
+         <obj_property name="ObjectShortName">ps2_clk</obj_property>
+         <obj_property name="CustomSignalColor">#FF00FF</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/sim_LaunchCPU/dut/u_ps2_rx/ps2_data" type="logic">
+         <obj_property name="ElementShortName">ps2_data</obj_property>
+         <obj_property name="ObjectShortName">ps2_data</obj_property>
+         <obj_property name="CustomSignalColor">#FF00FF</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/sim_LaunchCPU/dut/u_ps2_rx/key_valid" type="logic">
+         <obj_property name="ElementShortName">key_valid</obj_property>
+         <obj_property name="ObjectShortName">key_valid</obj_property>
+         <obj_property name="CustomSignalColor">#FF00FF</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/sim_LaunchCPU/dut/u_ps2_rx/key_data" type="array">
+         <obj_property name="ElementShortName">key_data[7:0]</obj_property>
+         <obj_property name="ObjectShortName">key_data[7:0]</obj_property>
+         <obj_property name="CustomSignalColor">#FF00FF</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/sim_LaunchCPU/dut/u_ps2_rx/bit_count" type="array">
+         <obj_property name="ElementShortName">bit_count[3:0]</obj_property>
+         <obj_property name="ObjectShortName">bit_count[3:0]</obj_property>
+         <obj_property name="CustomSignalColor">#FF00FF</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject fp_name="group391" type="group">
+      <obj_property name="label">VGA</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+      <wvobject fp_name="/sim_LaunchCPU/dut/vga/capture_pulse" type="logic">
+         <obj_property name="ElementShortName">capture_pulse</obj_property>
+         <obj_property name="ObjectShortName">capture_pulse</obj_property>
+         <obj_property name="CustomSignalColor">#FFA500</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/sim_LaunchCPU/dut/vga/snap_car" type="array">
+         <obj_property name="ElementShortName">snap_car[7:0]</obj_property>
+         <obj_property name="ObjectShortName">snap_car[7:0]</obj_property>
+         <obj_property name="CustomSignalColor">#FFA500</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/sim_LaunchCPU/dut/vga/scan_wr_data" type="array">
+         <obj_property name="ElementShortName">scan_wr_data[15:0]</obj_property>
+         <obj_property name="ObjectShortName">scan_wr_data[15:0]</obj_property>
+         <obj_property name="CustomSignalColor">#FFA500</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/sim_LaunchCPU/dut/vga/scan_wr_en" type="logic">
+         <obj_property name="ElementShortName">scan_wr_en</obj_property>
+         <obj_property name="ObjectShortName">scan_wr_en</obj_property>
+         <obj_property name="CustomSignalColor">#FFA500</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/sim_LaunchCPU/dut/vga/scan_done" type="logic">
+         <obj_property name="ElementShortName">scan_done</obj_property>
+         <obj_property name="ObjectShortName">scan_done</obj_property>
+         <obj_property name="CustomSignalColor">#FFA500</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/sim_LaunchCPU/dut/vga/video_bus" type="array">
+         <obj_property name="ElementShortName">video_bus[208:0]</obj_property>
+         <obj_property name="ObjectShortName">video_bus[208:0]</obj_property>
+         <obj_property name="CustomSignalColor">#FFA500</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
       </wvobject>
    </wvobject>
    <wvobject fp_name="/sim_LaunchCPU/dut/cpu/PC" type="array">
