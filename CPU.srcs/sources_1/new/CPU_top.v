@@ -106,7 +106,11 @@ module CPU_top (
     // Keyboard instruction injection
     input  wire        inject_req,         // held high by vga_display while injection pending
     input  wire [15:0] inject_instr,       // instruction word to inject {opcode, operand}
-    output wire        inject_done         // 1-cycle pulse when injected instruction completes
+    output wire        inject_done,        // 1-cycle pulse when injected instruction completes
+    // IM append write port (driven by vga_display via ALL_top)
+    input  wire        im_wr_en,           // 1-cycle write enable
+    input  wire [7:0]  im_wr_addr,         // write address (next slot after HALT)
+    input  wire [15:0] im_wr_data          // instruction word to write
 );
     wire clks=~clk;
     // -------------------------------------------------------
@@ -226,11 +230,18 @@ module CPU_top (
     assign scan_count = scan_addr + 8'd1;
 
     InstructionMemory im (
-        .clka      (clks),
-        .rsta      (reset),
-        .addra     (scan_busy ? scan_addr : MAR),  // mux: scan or normal fetch
-        .douta     (im_dout),
-        .rsta_busy (im_rsta_busy)
+        // Port A — write (keyboard append from vga_display via ALL_top)
+        .clka      (clk),
+        .wea       (im_wr_en),
+        .addra     (im_wr_addr),
+        .dina      (im_wr_data),
+        .rsta_busy (im_rsta_busy),
+        // Port B — read (scan FSM + normal fetch, unchanged)
+        .clkb      (clks),
+        .rstb      (reset),
+        .addrb     (scan_busy ? scan_addr : MAR),
+        .doutb     (im_dout),
+        .rstb_busy ()
     );
 
     // -------------------------------------------------------

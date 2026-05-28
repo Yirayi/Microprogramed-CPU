@@ -96,6 +96,10 @@ module vga_display (
     output reg         inj_req,           // held high until CPU acknowledges
     output reg  [15:0] inj_instr,         // {opcode[7:0], operand[7:0]}
     input  wire        inj_done,          // 1-cycle pulse from CPU when done
+    // IM append write port (to CPU_top via ALL_top)
+    output reg         im_wr_en,          // 1-cycle write enable
+    output reg  [7:0]  im_wr_addr,        // write address
+    output reg  [15:0] im_wr_data,        // instruction word {opcode, operand}
     output wire        vga_hs,
     output wire        vga_vs,
     output wire [3:0]  vga_r,
@@ -816,9 +820,14 @@ always @(posedge clk or posedge reset) begin
         blink_on         <= 1'b1;
         inj_req          <= 1'b0;
         inj_instr        <= 16'h0000;
+        im_wr_en         <= 1'b0;
+        im_wr_addr       <= 8'h00;
+        im_wr_data       <= 16'h0000;
         for (bl_i = 0; bl_i < 32; bl_i = bl_i + 1)
             input_buf[bl_i] <= `CSP;
     end else begin
+        // Default: no IM write this cycle
+        im_wr_en <= 1'b0;
         // Clear injection request once CPU acknowledges
         if (inj_done) inj_req <= 1'b0;
 
@@ -858,6 +867,14 @@ always @(posedge clk or posedge reset) begin
                     if (!v_halted && !inj_req) begin
                         inj_req   <= 1'b1;
                         inj_instr <= {parse_opcode, parse_operand};
+                    end
+                    // Append to IM after HALT and mirror into listing buffer
+                    if (instr_count < 8'd255) begin
+                        im_wr_en   <= 1'b1;
+                        im_wr_addr <= instr_count;
+                        im_wr_data <= {parse_opcode, parse_operand};
+                        instr_rom[instr_count] <= {parse_opcode, parse_operand};
+                        instr_count <= instr_count + 8'd1;
                     end
                 end else if (input_pos > 6'd0) begin
                     // Invalid instruction: write error message to history
@@ -1691,11 +1708,18 @@ wire bl_dbg_row = in_bl && (bl_row == 5'd26);
 //   col  15-20: unused (space)
 // ============================================================
 
-// Instruction ROM written by scan FSM
+// Instruction ROM written by scan FSM + keyboard append
 (* ram_style = "distributed" *) reg [15:0] instr_rom [0:255];
-always @(posedge clk) begin
-    if (scan_wr_en)
-        instr_rom[scan_wr_addr] <= scan_wr_data;
+reg [7:0] instr_count;  // total entries: scanned + keyboard-appended
+always @(posedge clk or posedge reset) begin
+    if (reset) begin
+        instr_count <= 8'd0;
+    end else begin
+        if (scan_wr_en) begin
+            instr_rom[scan_wr_addr] <= scan_wr_data;
+            instr_count <= instr_count + 8'd1;
+        end
+    end
 end
 
 // Middle panel coordinate signals
@@ -1712,13 +1736,13 @@ wire [7:0] highlighted_pc =
     (exec_mode == 2'b10) ? cur_exec_pc : v_PC;  // micro-step: executing; else: next fetch
 
 // Scrolling: keep highlighted row ~10 lines from top, clamped to list bounds
-wire [7:0] scroll_max = (scan_count > 8'd60) ? scan_count - 8'd60 : 8'd0;
+wire [7:0] scroll_max = (instr_count > 8'd60) ? instr_count - 8'd60 : 8'd0;
 wire [7:0] ideal_base = (highlighted_pc >= 8'd10) ? highlighted_pc - 8'd10 : 8'd0;
 wire [7:0] mid_base   = (ideal_base > scroll_max) ? scroll_max : ideal_base;
 
 // Row → instruction index
 wire [7:0] mid_idx      = mid_base + {2'b0, mrow};
-wire       mid_row_valid = scan_done && (mid_idx < scan_count);
+wire       mid_row_valid = scan_done && (mid_idx < instr_count);
 wire [7:0] mid_ir  = instr_rom[mid_idx][15:8];
 wire [7:0] mid_op  = instr_rom[mid_idx][7:0];
 

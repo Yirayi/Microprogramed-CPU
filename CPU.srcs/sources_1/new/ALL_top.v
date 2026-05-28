@@ -57,6 +57,11 @@ module ALL_top (
     wire [15:0] inj_instr;
     wire        inj_done;
 
+    // IM append write wires (vga_display → CPU_top)
+    wire        im_wr_en;
+    wire [7:0]  im_wr_addr;
+    wire [15:0] im_wr_data;
+
     // ---- SW 2-stage synchronizer (metastability) ----
     (* ASYNC_REG = "TRUE" *) reg [15:0] sw_s1, sw_s2;
     always @(posedge clk or posedge reset) begin
@@ -103,7 +108,10 @@ module ALL_top (
         .scan_count   (scan_count),
         .inject_req   (inj_req),
         .inject_instr (inj_instr),
-        .inject_done  (inj_done)
+        .inject_done  (inj_done),
+        .im_wr_en     (im_wr_en),
+        .im_wr_addr   (im_wr_addr),
+        .im_wr_data   (im_wr_data)
     );
 
     PS2_receiver u_ps2_rx (
@@ -158,6 +166,9 @@ module ALL_top (
         .inj_req         (inj_req),
         .inj_instr       (inj_instr),
         .inj_done        (inj_done),
+        .im_wr_en        (im_wr_en),
+        .im_wr_addr      (im_wr_addr),
+        .im_wr_data      (im_wr_data),
         .vga_hs          (vga_hs),
         .vga_vs          (vga_vs),
         .vga_r           (vga_r),
