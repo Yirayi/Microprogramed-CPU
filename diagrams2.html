@@ -36,15 +36,16 @@ svg{display:block;margin:0 auto}
   <div class="li"><div class="lb" style="background:#fdf2f8;border:2px solid #db2777;border-radius:4px"></div>物理接口</div>
 </div>
 
-<svg width="1060" height="640" viewBox="0 0 1060 640">
+<svg width="1160" height="640" viewBox="0 0 1160 640">
 <defs>
   <marker id="c1" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#1d4ed8"/></marker>
   <marker id="c2" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#15803d"/></marker>
   <marker id="c3" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#d97706"/></marker>
   <marker id="c4" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#6d28d9"/></marker>
   <marker id="c5" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#64748b"/></marker>
+  <marker id="c6" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#9333ea"/></marker>
 </defs>
-<rect width="1060" height="640" fill="#f0f7ff"/>
+<rect width="1160" height="640" fill="#f0f7ff"/>
 
 <!-- Physical input labels (top) -->
 <text x="96"  y="17" text-anchor="middle" fill="#64748b" font-size="13">ps2_clk / ps2_data</text>
@@ -79,11 +80,11 @@ svg{display:block;margin:0 auto}
 <!-- PS2 chain arrows -->
 <line x1="96" y1="130" x2="96" y2="178" stroke="#15803d" stroke-width="2.5" marker-end="url(#c2)"/>
 
-<!-- ps2_decoder → vga_display (route below CPU_top via y=595) -->
-<path d="M 174,214 L 194,214 L 194,595 L 622,595 L 622,440" fill="none" stroke="#15803d" stroke-width="2.5" marker-end="url(#c2)"/>
-<text x="405" y="591" text-anchor="middle" fill="#15803d" font-size="13" font-weight="bold">char_data / is_enter / is_backspace</text>
+<!-- ps2_decoder → vga_display (route below CPU_top via y=595, now enters at x=722) -->
+<path d="M 174,214 L 194,214 L 194,595 L 722,595 L 722,440" fill="none" stroke="#15803d" stroke-width="2.5" marker-end="url(#c2)"/>
+<text x="455" y="591" text-anchor="middle" fill="#15803d" font-size="13" font-weight="bold">char_data / is_enter / is_backspace</text>
 
-<!-- btn_debounce → CPU_top -->
+<!-- btn_debounce → CPU_top (ControlUnit) -->
 <line x1="174" y1="487" x2="212" y2="487" stroke="#d97706" stroke-width="2.5" marker-end="url(#c3)"/>
 <text x="193" y="480" text-anchor="middle" fill="#d97706" font-size="13">step_pulse</text>
 
@@ -125,7 +126,7 @@ svg{display:block;margin:0 auto}
 <text x="301" y="311" text-anchor="middle" fill="#1e40af" font-size="15" font-weight="bold">ALU</text>
 <text x="301" y="329" text-anchor="middle" fill="#475569" font-size="12">ADD/SUB/AND/OR/MPY…</text>
 
-<!-- Registers group -->
+<!-- Registers group (right edge x=574) -->
 <rect x="228" y="390" width="346" height="62" rx="6" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
 <text x="401" y="415" text-anchor="middle" fill="#92400e" font-size="15" font-weight="bold">寄存器组</text>
 <text x="401" y="435" text-anchor="middle" fill="#78350f" font-size="13">MAR · MBR · PC · IR · BR · ACC · MR</text>
@@ -135,72 +136,73 @@ svg{display:block;margin:0 auto}
 <line x1="370" y1="390" x2="422" y2="242" stroke="#1d4ed8" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#c1)"/>
 <text x="350" y="360" fill="#64748b" font-size="11">MAR</text>
 
-<!-- ── vga_display ── -->
-<rect x="622" y="50"  width="238" height="500" rx="12" fill="white" stroke="#2563eb" stroke-width="2.5"/>
-<text x="741" y="74"  text-anchor="middle" fill="#1e40af" font-size="17" font-weight="bold">vga_display</text>
+<!-- ── vga_display (shifted +100px: x=722) ── -->
+<rect x="722" y="50"  width="238" height="500" rx="12" fill="white" stroke="#2563eb" stroke-width="2.5"/>
+<text x="841" y="74"  text-anchor="middle" fill="#1e40af" font-size="17" font-weight="bold">vga_display</text>
 
-<rect x="636" y="86"  width="210" height="75" rx="6" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.5"/>
-<text x="741" y="110" text-anchor="middle" fill="#14532d" font-size="14" font-weight="bold">右: 寄存器实时状态</text>
-<text x="741" y="130" text-anchor="middle" fill="#065f46" font-size="12">← video_bus 解包</text>
-<text x="741" y="150" text-anchor="middle" fill="#065f46" font-size="12">所有寄存器 + I/O 端口</text>
+<!-- Panel A: registers (y=86-161, center_y=123) -->
+<rect x="736" y="86"  width="210" height="75" rx="6" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.5"/>
+<text x="841" y="110" text-anchor="middle" fill="#14532d" font-size="14" font-weight="bold">右: 寄存器实时状态</text>
+<text x="841" y="130" text-anchor="middle" fill="#065f46" font-size="12">← video_bus 解包</text>
+<text x="841" y="150" text-anchor="middle" fill="#065f46" font-size="12">所有寄存器 + I/O 端口</text>
 
-<rect x="636" y="174" width="210" height="75" rx="6" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
-<text x="741" y="198" text-anchor="middle" fill="#1e40af" font-size="14" font-weight="bold">中: 指令程序列表</text>
-<text x="741" y="218" text-anchor="middle" fill="#1d4ed8" font-size="12">← scan_* 扫描 IM</text>
-<text x="741" y="238" text-anchor="middle" fill="#1d4ed8" font-size="12">PC 行高亮 (video_bus)</text>
+<!-- Panel B: instruction list (y=174-249, center_y=211) -->
+<rect x="736" y="174" width="210" height="75" rx="6" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+<text x="841" y="198" text-anchor="middle" fill="#1e40af" font-size="14" font-weight="bold">中: 指令程序列表</text>
+<text x="841" y="218" text-anchor="middle" fill="#1d4ed8" font-size="12">← scan_* 扫描 IM</text>
+<text x="841" y="238" text-anchor="middle" fill="#1d4ed8" font-size="12">PC 行高亮 (video_bus)</text>
 
-<rect x="636" y="263" width="210" height="75" rx="6" fill="#fdf4ff" stroke="#9333ea" stroke-width="1.5"/>
-<text x="741" y="287" text-anchor="middle" fill="#6b21a8" font-size="14" font-weight="bold">左上: 执行历史</text>
-<text x="741" y="307" text-anchor="middle" fill="#7e22ce" font-size="12">← capture_pulse + snap_car</text>
-<text x="741" y="327" text-anchor="middle" fill="#7e22ce" font-size="12">指令/微步快照</text>
+<!-- Panel C: exec history (y=263-338, center_y=300) -->
+<rect x="736" y="263" width="210" height="75" rx="6" fill="#fdf4ff" stroke="#9333ea" stroke-width="1.5"/>
+<text x="841" y="287" text-anchor="middle" fill="#6b21a8" font-size="14" font-weight="bold">左上: 执行历史</text>
+<text x="841" y="307" text-anchor="middle" fill="#7e22ce" font-size="12">← capture_pulse + snap_car</text>
+<text x="841" y="327" text-anchor="middle" fill="#7e22ce" font-size="12">指令/微步快照</text>
 
-<rect x="636" y="352" width="210" height="75" rx="6" fill="#fffbeb" stroke="#d97706" stroke-width="1.5"/>
-<text x="741" y="376" text-anchor="middle" fill="#78350f" font-size="14" font-weight="bold">左下: 键盘输入区</text>
-<text x="741" y="396" text-anchor="middle" fill="#92400e" font-size="12">← exec_mode + PS2</text>
-<text x="741" y="416" text-anchor="middle" fill="#92400e" font-size="12">输入缓冲 + 历史</text>
+<!-- Panel D: keyboard input (y=352-427, center_y=389) -->
+<rect x="736" y="352" width="210" height="75" rx="6" fill="#fffbeb" stroke="#d97706" stroke-width="1.5"/>
+<text x="841" y="376" text-anchor="middle" fill="#78350f" font-size="14" font-weight="bold">左下: 键盘输入区</text>
+<text x="841" y="396" text-anchor="middle" fill="#92400e" font-size="12">← exec_mode + PS2</text>
+<text x="841" y="416" text-anchor="middle" fill="#92400e" font-size="12">输入缓冲 + 历史</text>
 
-<rect x="636" y="442" width="210" height="45" rx="6" fill="#fdf2f8" stroke="#db2777" stroke-width="1.5"/>
-<text x="741" y="462" text-anchor="middle" fill="#9d174d" font-size="14" font-weight="bold">VGA 输出</text>
-<text x="741" y="479" text-anchor="middle" fill="#be185d" font-size="12">hs / vs · R G B [3:0]</text>
+<!-- VGA output panel -->
+<rect x="736" y="442" width="210" height="45" rx="6" fill="#fdf2f8" stroke="#db2777" stroke-width="1.5"/>
+<text x="841" y="462" text-anchor="middle" fill="#9d174d" font-size="14" font-weight="bold">VGA 输出</text>
+<text x="841" y="479" text-anchor="middle" fill="#be185d" font-size="12">hs / vs · R G B [3:0]</text>
 
-<!-- ── seven_seg ── -->
-<rect x="622" y="570" width="238" height="58" rx="10" fill="white" stroke="#2563eb" stroke-width="2"/>
-<text x="741" y="596" text-anchor="middle" fill="#1e40af" font-size="15" font-weight="bold">seven_seg_decimal</text>
-<text x="741" y="616" text-anchor="middle" fill="#475569" font-size="13">port_out[0] → 7 段十进制</text>
+<!-- ── seven_seg (shifted +100px: x=722) ── -->
+<rect x="722" y="570" width="238" height="58" rx="10" fill="white" stroke="#2563eb" stroke-width="2"/>
+<text x="841" y="596" text-anchor="middle" fill="#1e40af" font-size="15" font-weight="bold">seven_seg_decimal</text>
+<text x="841" y="616" text-anchor="middle" fill="#475569" font-size="13">port_out[0] → 7 段十进制</text>
 
-<!-- ── Key inter-module arrows ── -->
+<!-- ════ Inter-module arrows (now 130px gap between CPU_top right x=592 and vga left x=722) ════ -->
 
-<!-- CPU_top → vga_display: video_bus (fat) -->
-<line x1="592" y1="210" x2="622" y2="210" stroke="#1d4ed8" stroke-width="8" marker-end="url(#c1)"/>
-<text x="607" y="202" text-anchor="middle" fill="#1d4ed8" font-size="12" font-weight="bold">video_bus</text>
-<text x="607" y="224" text-anchor="middle" fill="#1d4ed8" font-size="11">[208:0]</text>
+<!-- 1. video_bus: FROM Registers right edge (x=574, y=421) → elbow → Panel A (x=722, y=123) -->
+<path d="M 574,421 L 655,421 L 655,123 L 722,123" fill="none" stroke="#1d4ed8" stroke-width="8" marker-end="url(#c1)"/>
+<text x="655" y="295" text-anchor="middle" fill="#1d4ed8" font-size="13" font-weight="bold" transform="rotate(-90,655,295)">video_bus [208:0]</text>
 
-<!-- vga_display → CPU_top: injection -->
-<line x1="622" y1="290" x2="592" y2="290" stroke="#6d28d9" stroke-width="2.5" marker-end="url(#c4)"/>
-<text x="607" y="284" text-anchor="middle" fill="#6d28d9" font-size="11">inj_req</text>
-<text x="607" y="300" text-anchor="middle" fill="#6d28d9" font-size="11">inj_instr</text>
+<!-- 2. scan_*: FROM InstructionMemory right (x=574, y=215) → Panel B (x=722, y=211) -->
+<line x1="574" y1="215" x2="722" y2="211" stroke="#64748b" stroke-width="2.5" stroke-dasharray="6,3" marker-end="url(#c5)"/>
+<text x="648" y="204" text-anchor="middle" fill="#64748b" font-size="12" font-weight="bold">scan_* / inj_done</text>
 
-<!-- CPU_top → vga_display: scan + done -->
-<line x1="592" y1="345" x2="622" y2="345" stroke="#64748b" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#c5)"/>
-<text x="607" y="340" text-anchor="middle" fill="#64748b" font-size="11">scan_*</text>
-<text x="607" y="355" text-anchor="middle" fill="#64748b" font-size="11">inj_done</text>
+<!-- 3. capture_pulse + snap_car: FROM ControlUnit top → over top of CPU_top → Panel C (x=722, y=300) -->
+<path d="M 303,85 L 303,35 L 760,35 L 760,263 L 722,263" fill="none" stroke="#9333ea" stroke-width="2" stroke-dasharray="6,3" marker-end="url(#c6)"/>
+<text x="560" y="28" text-anchor="middle" fill="#9333ea" font-size="12" font-weight="bold">capture_pulse / snap_car</text>
 
-<!-- CPU_top → seven_seg: port_out[0] -->
-<line x1="592" y1="599" x2="622" y2="599" stroke="#1d4ed8" stroke-width="2.5" marker-end="url(#c1)"/>
-<text x="607" y="594" text-anchor="middle" fill="#1d4ed8" font-size="12">port_out[0]</text>
+<!-- 4. inject: FROM Panel D left (x=722, y=389) ← back to ControlUnit in CPU_top (x=592) -->
+<line x1="722" y1="389" x2="592" y2="389" stroke="#6d28d9" stroke-width="2.5" marker-end="url(#c4)"/>
+<text x="657" y="380" text-anchor="middle" fill="#6d28d9" font-size="12" font-weight="bold">inj_req / inj_instr</text>
+
+<!-- 5. port_out[0]: FROM CPU_top right (x=592, y=599) → seven_seg left (x=722) -->
+<line x1="592" y1="599" x2="722" y2="599" stroke="#1d4ed8" stroke-width="2.5" marker-end="url(#c1)"/>
+<text x="657" y="591" text-anchor="middle" fill="#1d4ed8" font-size="12">port_out[0]</text>
 
 <!-- vga_display → monitor -->
-<line x1="860" y1="464" x2="890" y2="464" stroke="#db2777" stroke-width="2.5" marker-end="url(#c1)"/>
-<text x="924" y="460" fill="#db2777" font-size="13" font-weight="bold">→ 显示器</text>
+<line x1="960" y1="464" x2="990" y2="464" stroke="#db2777" stroke-width="2.5" marker-end="url(#c1)"/>
+<text x="1030" y="460" fill="#db2777" font-size="13" font-weight="bold">→ 显示器</text>
 
 <!-- seven_seg → display -->
-<line x1="860" y1="599" x2="890" y2="599" stroke="#64748b" stroke-width="2" marker-end="url(#c5)"/>
-<text x="900" y="604" fill="#64748b" font-size="13">→ AN/SEG</text>
-
-<!-- exec_mode from top to CPU_top -->
-<text x="607" y="458" text-anchor="middle" fill="#d97706" font-size="11">capture_pulse</text>
-<text x="607" y="472" text-anchor="middle" fill="#d97706" font-size="11">snap_car</text>
-<line x1="592" y1="463" x2="622" y2="395" stroke="#d97706" stroke-width="1.8" stroke-dasharray="5,3" marker-end="url(#c3)"/>
+<line x1="960" y1="599" x2="990" y2="599" stroke="#64748b" stroke-width="2" marker-end="url(#c5)"/>
+<text x="1000" y="613" fill="#64748b" font-size="13">→ AN/SEG</text>
 </svg>
 </div>
 
