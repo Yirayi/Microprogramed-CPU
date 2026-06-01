@@ -2,18 +2,20 @@
 <html lang="zh">
 <head>
 <meta charset="UTF-8"><title>CPU 模块流程图集 II</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f7ff;color:#1e293b}
+body{font-family:'Nunito','Segoe UI',Arial,sans-serif;background:#f0f7ff;color:#1e293b}
 .tabs{display:flex;background:#dbeafe;border-bottom:2px solid #93c5fd;flex-wrap:wrap}
-.tab{padding:14px 28px;cursor:pointer;font-size:15px;font-weight:bold;
+.tab{padding:14px 28px;cursor:pointer;font-size:16px;font-weight:700;
   color:#64748b;border-bottom:3px solid transparent;transition:all .2s}
 .tab.active{color:#1d4ed8;border-bottom-color:#1d4ed8;background:#f0f7ff}
 .tab:hover{color:#1e40af}
 .page{display:none;padding:22px 28px}.page.active{display:block}
-h2{font-size:21px;color:#1e293b;margin-bottom:14px;text-align:center}
+h2{font-size:22px;color:#1e293b;margin-bottom:14px;text-align:center;font-weight:800}
 .leg{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:16px;justify-content:center}
-.li{display:flex;align-items:center;gap:8px;font-size:14px;color:#334155}
+.li{display:flex;align-items:center;gap:8px;font-size:15px;color:#334155;font-weight:600}
 .lb{width:24px;height:16px;border-radius:3px}
 svg{display:block;margin:0 auto}
 </style>
@@ -36,14 +38,17 @@ svg{display:block;margin:0 auto}
   <div class="li"><div class="lb" style="background:#fdf2f8;border:2px solid #db2777;border-radius:4px"></div>物理接口</div>
 </div>
 
-<svg width="1160" height="640" viewBox="0 0 1160 640">
+<svg width="1160" height="640" viewBox="0 0 1160 640" style="font-family:'Nunito','Segoe UI',Arial,sans-serif">
+<!-- Page 1: All modules overview -->
 <defs>
-  <marker id="c1" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#1d4ed8"/></marker>
-  <marker id="c2" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#15803d"/></marker>
-  <marker id="c3" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#d97706"/></marker>
-  <marker id="c4" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#6d28d9"/></marker>
-  <marker id="c5" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#64748b"/></marker>
-  <marker id="c6" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#9333ea"/></marker>
+  <!-- userSpaceOnUse: arrowhead size is fixed in px, independent of stroke-width -->
+  <marker id="c1f" markerWidth="20" markerHeight="13" refX="18" refY="6.5" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0,20 6.5,0 13" fill="#1d4ed8"/></marker>
+  <marker id="c1"  markerWidth="13" markerHeight="9"  refX="11" refY="4.5" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0,13 4.5,0 9"  fill="#1d4ed8"/></marker>
+  <marker id="c2"  markerWidth="13" markerHeight="9"  refX="11" refY="4.5" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0,13 4.5,0 9"  fill="#15803d"/></marker>
+  <marker id="c3"  markerWidth="13" markerHeight="9"  refX="11" refY="4.5" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0,13 4.5,0 9"  fill="#d97706"/></marker>
+  <marker id="c4"  markerWidth="13" markerHeight="9"  refX="11" refY="4.5" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0,13 4.5,0 9"  fill="#6d28d9"/></marker>
+  <marker id="c5"  markerWidth="13" markerHeight="9"  refX="11" refY="4.5" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0,13 4.5,0 9"  fill="#64748b"/></marker>
+  <marker id="c6"  markerWidth="13" markerHeight="9"  refX="11" refY="4.5" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0,13 4.5,0 9"  fill="#9333ea"/></marker>
 </defs>
 <rect width="1160" height="640" fill="#f0f7ff"/>
 
@@ -176,25 +181,28 @@ svg{display:block;margin:0 auto}
 
 <!-- ════ Inter-module arrows (now 130px gap between CPU_top right x=592 and vga left x=722) ════ -->
 
-<!-- 1. video_bus: FROM Registers right edge (x=574, y=421) → elbow → Panel A (x=722, y=123) -->
-<path d="M 574,421 L 655,421 L 655,123 L 722,123" fill="none" stroke="#1d4ed8" stroke-width="8" marker-end="url(#c1)"/>
-<text x="655" y="295" text-anchor="middle" fill="#1d4ed8" font-size="13" font-weight="bold" transform="rotate(-90,655,295)">video_bus [208:0]</text>
+<!-- 1. video_bus: FROM Registers right edge (x=574, y=421) → elbow (round) → Panel A (x=722, y=123) -->
+<!-- Fixed arrowhead: uses c1f (userSpaceOnUse, 20×13px) so stroke-width=5 doesn't inflate head -->
+<path d="M 574,421 L 657,421 L 657,123 L 722,123" fill="none" stroke="#1d4ed8" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#c1f)"/>
+<!-- Label sits beside the horizontal segment, above the Registers box level -->
+<text x="614" y="412" text-anchor="middle" fill="#1d4ed8" font-size="13" font-weight="700">video_bus [208:0]</text>
 
-<!-- 2. scan_*: FROM InstructionMemory right (x=574, y=215) → Panel B (x=722, y=211) -->
+<!-- 2. scan_*: FROM InstructionMemory right (x=574, y=215) → Panel B (x=722, y=211) — nearly horizontal -->
 <line x1="574" y1="215" x2="722" y2="211" stroke="#64748b" stroke-width="2.5" stroke-dasharray="6,3" marker-end="url(#c5)"/>
-<text x="648" y="204" text-anchor="middle" fill="#64748b" font-size="12" font-weight="bold">scan_* / inj_done</text>
+<text x="648" y="203" text-anchor="middle" fill="#64748b" font-size="13" font-weight="700">scan_* / inj_done</text>
 
-<!-- 3. capture_pulse + snap_car: FROM ControlUnit top → over top of CPU_top → Panel C (x=722, y=300) -->
-<path d="M 303,85 L 303,35 L 760,35 L 760,263 L 722,263" fill="none" stroke="#9333ea" stroke-width="2" stroke-dasharray="6,3" marker-end="url(#c6)"/>
-<text x="560" y="28" text-anchor="middle" fill="#9333ea" font-size="12" font-weight="bold">capture_pulse / snap_car</text>
+<!-- 3. capture_pulse + snap_car: simple horizontal from CPU_top right edge into Panel C -->
+<!-- Panel C center y=300; CPU_top right edge x=592; vga_display left x=722 -->
+<line x1="592" y1="300" x2="722" y2="300" stroke="#9333ea" stroke-width="2" stroke-dasharray="6,3" marker-end="url(#c6)"/>
+<text x="657" y="291" text-anchor="middle" fill="#9333ea" font-size="13" font-weight="700">capture_pulse / snap_car</text>
 
-<!-- 4. inject: FROM Panel D left (x=722, y=389) ← back to ControlUnit in CPU_top (x=592) -->
+<!-- 4. inject: FROM Panel D left (x=722, y=389) ← back to CPU_top right (x=592) -->
 <line x1="722" y1="389" x2="592" y2="389" stroke="#6d28d9" stroke-width="2.5" marker-end="url(#c4)"/>
-<text x="657" y="380" text-anchor="middle" fill="#6d28d9" font-size="12" font-weight="bold">inj_req / inj_instr</text>
+<text x="657" y="378" text-anchor="middle" fill="#6d28d9" font-size="13" font-weight="700">inj_req / inj_instr</text>
 
 <!-- 5. port_out[0]: FROM CPU_top right (x=592, y=599) → seven_seg left (x=722) -->
 <line x1="592" y1="599" x2="722" y2="599" stroke="#1d4ed8" stroke-width="2.5" marker-end="url(#c1)"/>
-<text x="657" y="591" text-anchor="middle" fill="#1d4ed8" font-size="12">port_out[0]</text>
+<text x="657" y="590" text-anchor="middle" fill="#1d4ed8" font-size="13" font-weight="700">port_out[0]</text>
 
 <!-- vga_display → monitor -->
 <line x1="960" y1="464" x2="990" y2="464" stroke="#db2777" stroke-width="2.5" marker-end="url(#c1)"/>
@@ -216,13 +224,13 @@ svg{display:block;margin:0 auto}
   <div class="li"><div class="lb" style="background:#fefce8;border:2px solid #ca8a04"></div>微指令控制位</div>
 </div>
 
-<svg width="1040" height="660" viewBox="0 0 1040 660">
+<svg width="1040" height="660" viewBox="0 0 1040 660" style="font-family:'Nunito','Segoe UI',Arial,sans-serif">
 <defs>
-  <marker id="d1" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#1d4ed8"/></marker>
-  <marker id="d2" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#ca8a04"/></marker>
-  <marker id="d3" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#16a34a"/></marker>
-  <marker id="d4" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#db2777"/></marker>
-  <marker id="d5" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#d97706"/></marker>
+  <marker id="d1" markerWidth="13" markerHeight="9" refX="11" refY="4.5" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0,13 4.5,0 9" fill="#1d4ed8"/></marker>
+  <marker id="d2" markerWidth="13" markerHeight="9" refX="11" refY="4.5" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0,13 4.5,0 9" fill="#ca8a04"/></marker>
+  <marker id="d3" markerWidth="13" markerHeight="9" refX="11" refY="4.5" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0,13 4.5,0 9" fill="#16a34a"/></marker>
+  <marker id="d4" markerWidth="13" markerHeight="9" refX="11" refY="4.5" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0,13 4.5,0 9" fill="#db2777"/></marker>
+  <marker id="d5" markerWidth="13" markerHeight="9" refX="11" refY="4.5" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0,13 4.5,0 9" fill="#d97706"/></marker>
 </defs>
 <rect width="1040" height="660" fill="#f0f7ff"/>
 
@@ -429,12 +437,12 @@ svg{display:block;margin:0 auto}
   <div class="li"><div class="lb" style="background:#f0fdf4;border:2px solid #16a34a"></div>触发条件</div>
 </div>
 
-<svg width="1040" height="590" viewBox="0 0 1040 590">
+<svg width="1040" height="590" viewBox="0 0 1040 590" style="font-family:'Nunito','Segoe UI',Arial,sans-serif">
 <defs>
-  <marker id="e1" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#1d4ed8"/></marker>
-  <marker id="e2" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#ca8a04"/></marker>
-  <marker id="e3" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#16a34a"/></marker>
-  <marker id="e4" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#db2777"/></marker>
+  <marker id="e1" markerWidth="13" markerHeight="9" refX="11" refY="4.5" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0,13 4.5,0 9" fill="#1d4ed8"/></marker>
+  <marker id="e2" markerWidth="13" markerHeight="9" refX="11" refY="4.5" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0,13 4.5,0 9" fill="#ca8a04"/></marker>
+  <marker id="e3" markerWidth="13" markerHeight="9" refX="11" refY="4.5" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0,13 4.5,0 9" fill="#16a34a"/></marker>
+  <marker id="e4" markerWidth="13" markerHeight="9" refX="11" refY="4.5" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0,13 4.5,0 9" fill="#db2777"/></marker>
 </defs>
 <rect width="1040" height="590" fill="#f0f7ff"/>
 

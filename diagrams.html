@@ -2,18 +2,20 @@
 <html lang="zh">
 <head>
 <meta charset="UTF-8"><title>CPU 模块交互图</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f7ff;color:#1e293b}
+body{font-family:'Nunito','Segoe UI',Arial,sans-serif;background:#f0f7ff;color:#1e293b}
 .tabs{display:flex;background:#dbeafe;border-bottom:2px solid #93c5fd}
-.tab{padding:14px 36px;cursor:pointer;font-size:16px;font-weight:bold;
+.tab{padding:14px 36px;cursor:pointer;font-size:16px;font-weight:700;
   color:#64748b;border-bottom:3px solid transparent;transition:all .2s}
 .tab.active{color:#1d4ed8;border-bottom-color:#1d4ed8;background:#f0f7ff}
 .tab:hover{color:#1e40af}
 .page{display:none;padding:22px 30px}.page.active{display:block}
-h2{font-size:21px;color:#1e293b;margin-bottom:14px;text-align:center}
+h2{font-size:22px;color:#1e293b;margin-bottom:14px;text-align:center;font-weight:800}
 .leg{display:flex;flex-wrap:wrap;gap:16px;margin-bottom:18px;justify-content:center}
-.li{display:flex;align-items:center;gap:8px;font-size:14px;color:#334155}
+.li{display:flex;align-items:center;gap:8px;font-size:15px;color:#334155;font-weight:600}
 .lb{width:24px;height:16px;border-radius:3px}
 svg{display:block;margin:0 auto}
 </style>
@@ -35,162 +37,163 @@ svg{display:block;margin:0 auto}
   <div class="li"><div class="lb" style="background:#fdf2f8;border:2px solid #db2777;border-radius:4px"></div>显示面板</div>
 </div>
 
-<svg width="1040" height="610" viewBox="0 0 1040 610">
+<svg width="1040" height="620" viewBox="0 0 1040 620" style="font-family:'Nunito','Segoe UI',Arial,sans-serif">
 <defs>
-  <marker id="a1" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#1d4ed8"/></marker>
-  <marker id="a2" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#16a34a"/></marker>
-  <marker id="a3" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#7c3aed"/></marker>
-  <marker id="a4" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#db2777"/></marker>
+  <!-- All markers use userSpaceOnUse so stroke-width never inflates the head -->
+  <marker id="a1f" markerWidth="20" markerHeight="13" refX="18" refY="6.5" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0,20 6.5,0 13" fill="#1d4ed8"/></marker>
+  <marker id="a1"  markerWidth="13" markerHeight="9"  refX="11" refY="4.5" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0,13 4.5,0 9"  fill="#1d4ed8"/></marker>
+  <marker id="a2"  markerWidth="13" markerHeight="9"  refX="11" refY="4.5" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0,13 4.5,0 9"  fill="#16a34a"/></marker>
+  <marker id="a3"  markerWidth="13" markerHeight="9"  refX="11" refY="4.5" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0,13 4.5,0 9"  fill="#7c3aed"/></marker>
+  <marker id="a4"  markerWidth="13" markerHeight="9"  refX="11" refY="4.5" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0,13 4.5,0 9"  fill="#db2777"/></marker>
 </defs>
 
-<rect width="1040" height="610" fill="#f0f7ff"/>
+<rect width="1040" height="620" fill="#f0f7ff"/>
 
 <!-- ── CPU_top container ── -->
-<rect x="16" y="50" width="335" height="545" rx="12" fill="white" stroke="#2563eb" stroke-width="2"/>
-<text x="183" y="76" text-anchor="middle" fill="#1e40af" font-size="17" font-weight="bold">CPU_top 输出状态</text>
+<rect x="16" y="50" width="335" height="555" rx="12" fill="white" stroke="#2563eb" stroke-width="2"/>
+<text x="183" y="77" text-anchor="middle" fill="#1e40af" font-size="18" font-weight="800">CPU_top 输出状态</text>
 
 <!-- section: registers -->
-<text x="30" y="99" fill="#64748b" font-size="13" font-weight="bold">寄存器  →  video_bus 打包</text>
-<line x1="30" y1="103" x2="337" y2="103" stroke="#e2e8f0" stroke-width="1"/>
+<text x="30" y="100" fill="#64748b" font-size="14" font-weight="700">寄存器  →  video_bus 打包</text>
+<line x1="30" y1="105" x2="337" y2="105" stroke="#e2e8f0" stroke-width="1"/>
 
 <!-- Row 1: MAR PC IR CAR -->
-<rect x="30"  y="109" width="67" height="40" rx="4" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
-<text x="63"  y="129" text-anchor="middle" fill="#92400e" font-size="15" font-weight="bold">MAR</text>
-<text x="63"  y="144" text-anchor="middle" fill="#78350f" font-size="12">[7:0]</text>
+<rect x="30"  y="111" width="67" height="42" rx="4" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
+<text x="63"  y="132" text-anchor="middle" fill="#92400e" font-size="15" font-weight="700">MAR</text>
+<text x="63"  y="148" text-anchor="middle" fill="#78350f" font-size="12">[7:0]</text>
 
-<rect x="106" y="109" width="67" height="40" rx="4" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
-<text x="139" y="129" text-anchor="middle" fill="#92400e" font-size="15" font-weight="bold">PC</text>
-<text x="139" y="144" text-anchor="middle" fill="#78350f" font-size="12">[7:0]</text>
+<rect x="106" y="111" width="67" height="42" rx="4" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
+<text x="139" y="132" text-anchor="middle" fill="#92400e" font-size="15" font-weight="700">PC</text>
+<text x="139" y="148" text-anchor="middle" fill="#78350f" font-size="12">[7:0]</text>
 
-<rect x="182" y="109" width="67" height="40" rx="4" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
-<text x="215" y="129" text-anchor="middle" fill="#92400e" font-size="15" font-weight="bold">IR</text>
-<text x="215" y="144" text-anchor="middle" fill="#78350f" font-size="12">[7:0]</text>
+<rect x="182" y="111" width="67" height="42" rx="4" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
+<text x="215" y="132" text-anchor="middle" fill="#92400e" font-size="15" font-weight="700">IR</text>
+<text x="215" y="148" text-anchor="middle" fill="#78350f" font-size="12">[7:0]</text>
 
-<rect x="258" y="109" width="78" height="40" rx="4" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
-<text x="297" y="129" text-anchor="middle" fill="#92400e" font-size="15" font-weight="bold">CAR</text>
-<text x="297" y="144" text-anchor="middle" fill="#78350f" font-size="12">[7:0]</text>
+<rect x="258" y="111" width="78" height="42" rx="4" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
+<text x="297" y="132" text-anchor="middle" fill="#92400e" font-size="15" font-weight="700">CAR</text>
+<text x="297" y="148" text-anchor="middle" fill="#78350f" font-size="12">[7:0]</text>
 
 <!-- Row 2: MBR BR ACC MR -->
-<rect x="30"  y="162" width="67" height="40" rx="4" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
-<text x="63"  y="182" text-anchor="middle" fill="#92400e" font-size="15" font-weight="bold">MBR</text>
-<text x="63"  y="197" text-anchor="middle" fill="#78350f" font-size="11">[15:0]</text>
+<rect x="30"  y="164" width="67" height="42" rx="4" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
+<text x="63"  y="185" text-anchor="middle" fill="#92400e" font-size="15" font-weight="700">MBR</text>
+<text x="63"  y="200" text-anchor="middle" fill="#78350f" font-size="12">[15:0]</text>
 
-<rect x="106" y="162" width="67" height="40" rx="4" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
-<text x="139" y="182" text-anchor="middle" fill="#92400e" font-size="15" font-weight="bold">BR</text>
-<text x="139" y="197" text-anchor="middle" fill="#78350f" font-size="11">[15:0]</text>
+<rect x="106" y="164" width="67" height="42" rx="4" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
+<text x="139" y="185" text-anchor="middle" fill="#92400e" font-size="15" font-weight="700">BR</text>
+<text x="139" y="200" text-anchor="middle" fill="#78350f" font-size="12">[15:0]</text>
 
-<rect x="182" y="162" width="67" height="40" rx="4" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
-<text x="215" y="182" text-anchor="middle" fill="#92400e" font-size="15" font-weight="bold">ACC</text>
-<text x="215" y="197" text-anchor="middle" fill="#78350f" font-size="11">[15:0]</text>
+<rect x="182" y="164" width="67" height="42" rx="4" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
+<text x="215" y="185" text-anchor="middle" fill="#92400e" font-size="15" font-weight="700">ACC</text>
+<text x="215" y="200" text-anchor="middle" fill="#78350f" font-size="12">[15:0]</text>
 
-<rect x="258" y="162" width="78" height="40" rx="4" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
-<text x="297" y="182" text-anchor="middle" fill="#92400e" font-size="15" font-weight="bold">MR</text>
-<text x="297" y="197" text-anchor="middle" fill="#78350f" font-size="11">[15:0]</text>
+<rect x="258" y="164" width="78" height="42" rx="4" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
+<text x="297" y="185" text-anchor="middle" fill="#92400e" font-size="15" font-weight="700">MR</text>
+<text x="297" y="200" text-anchor="middle" fill="#78350f" font-size="12">[15:0]</text>
 
 <!-- I/O ports + micro_instr -->
-<text x="30" y="225" fill="#64748b" font-size="13" font-weight="bold">I/O 端口 + 微指令</text>
-<rect x="30"  y="232" width="135" height="38" rx="4" fill="#f5f3ff" stroke="#7c3aed" stroke-width="2"/>
-<text x="97"  y="252" text-anchor="middle" fill="#4c1d95" font-size="14" font-weight="bold">port_in[0]</text>
-<text x="97"  y="266" text-anchor="middle" fill="#5b21b6" font-size="11">[15:0]</text>
+<text x="30" y="228" fill="#64748b" font-size="14" font-weight="700">I/O 端口 + 微指令</text>
+<rect x="30"  y="234" width="135" height="42" rx="4" fill="#f5f3ff" stroke="#7c3aed" stroke-width="2"/>
+<text x="97"  y="256" text-anchor="middle" fill="#4c1d95" font-size="14" font-weight="700">port_in[0]</text>
+<text x="97"  y="271" text-anchor="middle" fill="#5b21b6" font-size="12">[15:0]</text>
 
-<rect x="175" y="232" width="160" height="38" rx="4" fill="#f5f3ff" stroke="#7c3aed" stroke-width="2"/>
-<text x="255" y="251" text-anchor="middle" fill="#4c1d95" font-size="14" font-weight="bold">port_out[0..3]</text>
-<text x="255" y="266" text-anchor="middle" fill="#5b21b6" font-size="11">[15:0] each</text>
+<rect x="175" y="234" width="160" height="42" rx="4" fill="#f5f3ff" stroke="#7c3aed" stroke-width="2"/>
+<text x="255" y="255" text-anchor="middle" fill="#4c1d95" font-size="14" font-weight="700">port_out[0..3]</text>
+<text x="255" y="270" text-anchor="middle" fill="#5b21b6" font-size="12">[15:0] each</text>
 
-<rect x="30"  y="282" width="135" height="38" rx="4" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
-<text x="97"  y="303" text-anchor="middle" fill="#92400e" font-size="14" font-weight="bold">micro_instr</text>
-<text x="97"  y="317" text-anchor="middle" fill="#78350f" font-size="11">[31:0]</text>
+<rect x="30"  y="287" width="135" height="42" rx="4" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
+<text x="97"  y="309" text-anchor="middle" fill="#92400e" font-size="14" font-weight="700">micro_instr</text>
+<text x="97"  y="324" text-anchor="middle" fill="#78350f" font-size="12">[31:0]</text>
 
-<rect x="175" y="282" width="160" height="38" rx="4" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
-<text x="255" y="302" text-anchor="middle" fill="#064e3b" font-size="14" font-weight="bold">halted</text>
-<text x="255" y="317" text-anchor="middle" fill="#065f46" font-size="11">1-bit</text>
+<rect x="175" y="287" width="160" height="42" rx="4" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+<text x="255" y="308" text-anchor="middle" fill="#064e3b" font-size="14" font-weight="700">halted</text>
+<text x="255" y="323" text-anchor="middle" fill="#065f46" font-size="12">1-bit</text>
 
 <!-- Divider -->
-<line x1="30" y1="338" x2="337" y2="338" stroke="#cbd5e0" stroke-width="1.5" stroke-dasharray="5,3"/>
-<text x="183" y="352" text-anchor="middle" fill="#94a3b8" font-size="13">以下为直达信号 (不经 video_bus)</text>
+<line x1="30" y1="345" x2="337" y2="345" stroke="#cbd5e0" stroke-width="1.5" stroke-dasharray="5,3"/>
+<text x="183" y="360" text-anchor="middle" fill="#94a3b8" font-size="13">以下为直达信号 (不经 video_bus)</text>
 
 <!-- Direct signals -->
-<rect x="30"  y="362" width="130" height="38" rx="4" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
-<text x="95"  y="382" text-anchor="middle" fill="#064e3b" font-size="14" font-weight="bold">exec_mode</text>
-<text x="95"  y="396" text-anchor="middle" fill="#065f46" font-size="11">[1:0]</text>
+<rect x="30"  y="370" width="135" height="42" rx="4" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+<text x="97"  y="392" text-anchor="middle" fill="#064e3b" font-size="14" font-weight="700">exec_mode</text>
+<text x="97"  y="407" text-anchor="middle" fill="#065f46" font-size="12">[1:0]</text>
 
-<rect x="175" y="362" width="160" height="38" rx="4" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
-<text x="255" y="382" text-anchor="middle" fill="#064e3b" font-size="14" font-weight="bold">capture_pulse</text>
-<text x="255" y="396" text-anchor="middle" fill="#065f46" font-size="11">1-bit</text>
+<rect x="175" y="370" width="160" height="42" rx="4" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+<text x="255" y="392" text-anchor="middle" fill="#064e3b" font-size="14" font-weight="700">capture_pulse</text>
+<text x="255" y="407" text-anchor="middle" fill="#065f46" font-size="12">1-bit</text>
 
-<rect x="30"  y="414" width="130" height="38" rx="4" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
-<text x="95"  y="434" text-anchor="middle" fill="#064e3b" font-size="14" font-weight="bold">snap_car</text>
-<text x="95"  y="448" text-anchor="middle" fill="#065f46" font-size="11">[7:0]</text>
+<rect x="30"  y="423" width="135" height="42" rx="4" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+<text x="97"  y="445" text-anchor="middle" fill="#064e3b" font-size="14" font-weight="700">snap_car</text>
+<text x="97"  y="460" text-anchor="middle" fill="#065f46" font-size="12">[7:0]</text>
 
 <!-- IM Scan box -->
-<text x="30" y="476" fill="#64748b" font-size="13" font-weight="bold">InstructionMemory 扫描接口</text>
-<rect x="30"  y="483" width="305" height="48" rx="4" fill="#f5f3ff" stroke="#7c3aed" stroke-width="2"/>
-<text x="182" y="504" text-anchor="middle" fill="#4c1d95" font-size="14" font-weight="bold">scan_wr_en / scan_wr_addr / scan_wr_data</text>
-<text x="182" y="522" text-anchor="middle" fill="#5b21b6" font-size="12">scan_done · scan_count</text>
+<text x="30" y="484" fill="#64748b" font-size="13" font-weight="700">InstructionMemory 扫描接口</text>
+<rect x="30"  y="490" width="305" height="50" rx="4" fill="#f5f3ff" stroke="#7c3aed" stroke-width="2"/>
+<text x="182" y="511" text-anchor="middle" fill="#4c1d95" font-size="13" font-weight="700">scan_wr_en / scan_wr_addr / scan_wr_data</text>
+<text x="182" y="530" text-anchor="middle" fill="#5b21b6" font-size="12">scan_done · scan_count</text>
 
-<!-- ══ ARROWS from CPU_top to vga_display ══ -->
+<!-- ════ ARROWS  (drawn after boxes so labels stay on top) ════ -->
 
-<!-- Arrow 1: video_bus — from Registers group right edge to Panel A -->
-<!-- Registers center_y ≈ 182; Panel A center_y = 88+98/2 = 137 -->
-<path d="M 351,182 L 420,182 L 420,137 L 458,137" fill="none" stroke="#1d4ed8" stroke-width="8" marker-end="url(#a1)"/>
-<text x="406" y="170" text-anchor="middle" fill="#1d4ed8" font-size="14" font-weight="bold">video_bus</text>
-<text x="406" y="156" text-anchor="middle" fill="#1d4ed8" font-size="12">[208:0]</text>
+<!-- Arrow 1: video_bus — gentle diagonal from register group to Panel A -->
+<!-- Registers row center y≈182; Panel A center y≈137 -->
+<line x1="351" y1="157" x2="458" y2="137" stroke="#1d4ed8" stroke-width="5" marker-end="url(#a1f)"/>
+<text x="406" y="136" text-anchor="middle" fill="#1d4ed8" font-size="14" font-weight="800">video_bus</text>
+<text x="406" y="120" text-anchor="middle" fill="#1d4ed8" font-size="12">[208:0]</text>
 
-<!-- Arrow 2: direct signals (capture_pulse + exec_mode) → Panel C -->
-<!-- capture_pulse box: x=175-335, y=362-400, center_y=381; Panel C center_y=313+95/2=360 -->
-<path d="M 351,375 L 420,375 L 420,360 L 458,360" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-dasharray="7,4" marker-end="url(#a2)"/>
-<!-- snap_car → Panel C -->
-<path d="M 351,433 L 430,433 L 430,380 L 458,380" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-dasharray="7,4" marker-end="url(#a2)"/>
-<text x="406" y="412" text-anchor="middle" fill="#16a34a" font-size="13">直达信号</text>
+<!-- Arrow 2: direct signals → Panel C — two gentle diagonals -->
+<!-- capture_pulse center y=391; Panel C center y≈360 -->
+<line x1="351" y1="389" x2="458" y2="362" stroke="#16a34a" stroke-width="2.5" stroke-dasharray="7,4" marker-end="url(#a2)"/>
+<!-- snap_car center y=444; Panel C bottom area y≈395 -->
+<line x1="351" y1="444" x2="458" y2="395" stroke="#16a34a" stroke-width="2.5" stroke-dasharray="7,4" marker-end="url(#a2)"/>
+<text x="406" y="425" text-anchor="middle" fill="#16a34a" font-size="13" font-weight="700">直达信号</text>
 
-<!-- Arrow 3: scan interface → Panel B (instruction list) -->
-<!-- Scan box center_y = 483+24 = 507; Panel B center_y = 200+49 = 249 -->
-<path d="M 351,507 L 440,507 L 440,249 L 458,249" fill="none" stroke="#7c3aed" stroke-width="2.5" stroke-dasharray="7,4" marker-end="url(#a3)"/>
-<text x="440" y="390" text-anchor="middle" fill="#7c3aed" font-size="13" transform="rotate(-90,440,390)">scan_*</text>
+<!-- Arrow 3: scan_* → Panel B — balanced 3-segment path, round corners -->
+<!-- Exit CPU_top at y=510, corner at x=405 (mid-gap), enter Panel B at y=249 -->
+<path d="M 351,510 L 405,510 L 405,249 L 458,249" fill="none" stroke="#7c3aed" stroke-width="2.5" stroke-dasharray="7,4" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#a3)"/>
+<text x="378" y="502" text-anchor="middle" fill="#7c3aed" font-size="13" font-weight="700">scan_*</text>
 
-<!-- ══ vga_display ══ -->
-<rect x="458" y="50" width="410" height="545" rx="12" fill="white" stroke="#2563eb" stroke-width="2"/>
-<text x="663" y="76" text-anchor="middle" fill="#1e40af" font-size="17" font-weight="bold">vga_display</text>
+<!-- ════ vga_display (drawn after arrows so panels cover the path interiors) ════ -->
+<rect x="458" y="50" width="415" height="555" rx="12" fill="white" stroke="#2563eb" stroke-width="2"/>
+<text x="665" y="77" text-anchor="middle" fill="#1e40af" font-size="18" font-weight="800">vga_display</text>
 
-<!-- Panel A: Right - registers (y=88-186) -->
-<rect x="474" y="88" width="378" height="98" rx="6" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
-<text x="663" y="112" text-anchor="middle" fill="#14532d" font-size="15" font-weight="bold">右侧面板 — 寄存器实时状态</text>
-<text x="663" y="132" text-anchor="middle" fill="#065f46" font-size="13">PC · MAR · IR · CAR · MBR · BR · ACC · MR</text>
-<text x="663" y="152" text-anchor="middle" fill="#065f46" font-size="13">micro_instr · MODE · HALT · I/O 端口值</text>
-<text x="474" y="179" fill="#94a3b8" font-size="11">← video_bus 解包</text>
+<!-- Panel A: Right - registers (y=90-195) -->
+<rect x="474" y="90" width="383" height="100" rx="6" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+<text x="665" y="115" text-anchor="middle" fill="#14532d" font-size="15" font-weight="700">右侧面板 — 寄存器实时状态</text>
+<text x="665" y="136" text-anchor="middle" fill="#065f46" font-size="13">PC · MAR · IR · CAR · MBR · BR · ACC · MR</text>
+<text x="665" y="156" text-anchor="middle" fill="#065f46" font-size="13">micro_instr · MODE · HALT · I/O 端口值</text>
+<text x="477" y="183" fill="#94a3b8" font-size="12">← video_bus 解包</text>
 
-<!-- Panel B: Middle - instruction list (y=200-298) -->
-<rect x="474" y="200" width="378" height="98" rx="6" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
-<text x="663" y="224" text-anchor="middle" fill="#1e40af" font-size="15" font-weight="bold">中间面板 — 指令程序列表</text>
-<text x="663" y="248" text-anchor="middle" fill="#1d4ed8" font-size="13">静态扫描 InstructionMemory 全部内容</text>
-<text x="663" y="268" text-anchor="middle" fill="#1d4ed8" font-size="13">当前 PC 行绿色高亮，自动滚动</text>
-<text x="474" y="291" fill="#94a3b8" font-size="11">← scan_* + video_bus(PC)</text>
+<!-- Panel B: Middle - instruction list (y=205-310) -->
+<rect x="474" y="205" width="383" height="100" rx="6" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+<text x="665" y="230" text-anchor="middle" fill="#1e40af" font-size="15" font-weight="700">中间面板 — 指令程序列表</text>
+<text x="665" y="254" text-anchor="middle" fill="#1d4ed8" font-size="13">静态扫描 InstructionMemory 全部内容</text>
+<text x="665" y="274" text-anchor="middle" fill="#1d4ed8" font-size="13">当前 PC 行绿色高亮，自动滚动</text>
+<text x="477" y="298" fill="#94a3b8" font-size="12">← scan_* + video_bus(PC)</text>
 
-<!-- Panel C: Left-top - exec history (y=313-408) -->
-<rect x="474" y="313" width="378" height="95" rx="6" fill="#fdf4ff" stroke="#9333ea" stroke-width="2"/>
-<text x="663" y="337" text-anchor="middle" fill="#6b21a8" font-size="15" font-weight="bold">左上面板 — 执行历史</text>
-<text x="663" y="358" text-anchor="middle" fill="#7e22ce" font-size="13">capture_pulse 触发，记录每条指令/微步</text>
-<text x="663" y="378" text-anchor="middle" fill="#7e22ce" font-size="13">显示 IR / CAR / 助记符 等信息</text>
-<text x="474" y="402" fill="#94a3b8" font-size="11">← capture_pulse + snap_car + video_bus</text>
+<!-- Panel C: Left-top - exec history (y=320-425) -->
+<rect x="474" y="320" width="383" height="100" rx="6" fill="#fdf4ff" stroke="#9333ea" stroke-width="2"/>
+<text x="665" y="345" text-anchor="middle" fill="#6b21a8" font-size="15" font-weight="700">左上面板 — 执行历史</text>
+<text x="665" y="367" text-anchor="middle" fill="#7e22ce" font-size="13">capture_pulse 触发，记录每条指令/微步</text>
+<text x="665" y="387" text-anchor="middle" fill="#7e22ce" font-size="13">显示 IR / CAR / 助记符 等信息</text>
+<text x="477" y="413" fill="#94a3b8" font-size="12">← capture_pulse + snap_car + video_bus</text>
 
-<!-- Panel D: Left-bottom - keyboard (y=420-510) -->
-<rect x="474" y="420" width="378" height="90" rx="6" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
-<text x="663" y="444" text-anchor="middle" fill="#78350f" font-size="15" font-weight="bold">左下面板 — 键盘输入区</text>
-<text x="663" y="464" text-anchor="middle" fill="#92400e" font-size="13">显示输入缓冲区 + 历史指令列表</text>
-<text x="663" y="484" text-anchor="middle" fill="#92400e" font-size="13">光标闪烁 (帧计数器 ~2Hz)</text>
-<text x="474" y="505" fill="#94a3b8" font-size="11">← exec_mode + PS2 解码输出</text>
+<!-- Panel D: Left-bottom - keyboard (y=435-525) -->
+<rect x="474" y="435" width="383" height="90" rx="6" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
+<text x="665" y="459" text-anchor="middle" fill="#78350f" font-size="15" font-weight="700">左下面板 — 键盘输入区</text>
+<text x="665" y="479" text-anchor="middle" fill="#92400e" font-size="13">显示输入缓冲区 + 历史指令列表</text>
+<text x="665" y="499" text-anchor="middle" fill="#92400e" font-size="13">光标闪烁 (帧计数器 ~2Hz)</text>
+<text x="477" y="519" fill="#94a3b8" font-size="12">← exec_mode + PS2 解码输出</text>
 
 <!-- VGA output -->
-<rect x="474" y="520" width="378" height="50" rx="6" fill="#fdf2f8" stroke="#db2777" stroke-width="2"/>
-<text x="663" y="542" text-anchor="middle" fill="#9d174d" font-size="15" font-weight="bold">VGA 输出</text>
-<text x="663" y="561" text-anchor="middle" fill="#be185d" font-size="13">vga_hs · vga_vs · R[3:0] · G[3:0] · B[3:0]</text>
+<rect x="474" y="533" width="383" height="52" rx="6" fill="#fdf2f8" stroke="#db2777" stroke-width="2"/>
+<text x="665" y="556" text-anchor="middle" fill="#9d174d" font-size="15" font-weight="700">VGA 输出</text>
+<text x="665" y="576" text-anchor="middle" fill="#be185d" font-size="13">vga_hs · vga_vs · R[3:0] · G[3:0] · B[3:0]</text>
 
 <!-- Arrow to monitor -->
-<line x1="868" y1="545" x2="920" y2="545" stroke="#db2777" stroke-width="3" marker-end="url(#a4)"/>
-<text x="946" y="541" fill="#be185d" font-size="14" font-weight="bold">→</text>
-<text x="946" y="556" fill="#be185d" font-size="13">显示器</text>
+<line x1="873" y1="559" x2="926" y2="559" stroke="#db2777" stroke-width="3" marker-end="url(#a4)"/>
+<text x="952" y="554" fill="#be185d" font-size="14" font-weight="700">→ 显示器</text>
 
-<text x="663" y="594" text-anchor="middle" fill="#94a3b8" font-size="12">字体 ROM 47字符·8×8px · 25MHz 像素时钟 (100MHz÷4)</text>
+<text x="665" y="608" text-anchor="middle" fill="#94a3b8" font-size="12">字体 ROM 47字符·8×8px · 25MHz 像素时钟 (100MHz÷4)</text>
 </svg>
 </div>
 
@@ -204,147 +207,142 @@ svg{display:block;margin:0 auto}
   <div class="li"><div class="lb" style="background:#f0fdf4;border:2px solid #16a34a"></div>解析结果</div>
 </div>
 
-<!-- Wider canvas: 5 stages with 105px gaps -->
-<svg width="1320" height="680" viewBox="0 0 1320 680">
+<!-- 5 stages with ~110px gaps; CPU_top widened to 220px for readable sub-boxes -->
+<svg width="1460" height="690" viewBox="0 0 1460 690" style="font-family:'Nunito','Segoe UI',Arial,sans-serif">
 <defs>
-  <marker id="b1" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#15803d"/></marker>
-  <marker id="b2" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#1d4ed8"/></marker>
-  <marker id="b3" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#6d28d9"/></marker>
-  <marker id="b4" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#d97706"/></marker>
-  <marker id="b5" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#db2777"/></marker>
+  <marker id="b1" markerWidth="13" markerHeight="9" refX="11" refY="4.5" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0,13 4.5,0 9" fill="#15803d"/></marker>
+  <marker id="b2" markerWidth="13" markerHeight="9" refX="11" refY="4.5" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0,13 4.5,0 9" fill="#1d4ed8"/></marker>
+  <marker id="b3" markerWidth="14" markerHeight="10" refX="12" refY="5"   orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0,14 5,0 10" fill="#6d28d9"/></marker>
+  <marker id="b4" markerWidth="13" markerHeight="9" refX="11" refY="4.5" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0,13 4.5,0 9" fill="#d97706"/></marker>
+  <marker id="b5" markerWidth="13" markerHeight="9" refX="11" refY="4.5" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0,13 4.5,0 9" fill="#db2777"/></marker>
 </defs>
-<rect width="1320" height="680" fill="#f0f7ff"/>
+<rect width="1460" height="690" fill="#f0f7ff"/>
 
 <!-- Stage labels -->
-<text x="68"   y="22" text-anchor="middle" fill="#94a3b8" font-size="13">① 硬件</text>
-<text x="303"  y="22" text-anchor="middle" fill="#94a3b8" font-size="13">② 协议解码</text>
-<text x="558"  y="22" text-anchor="middle" fill="#94a3b8" font-size="13">③ 字符解析</text>
-<text x="882"  y="22" text-anchor="middle" fill="#94a3b8" font-size="13">④ UI + 指令解析</text>
-<text x="1210" y="22" text-anchor="middle" fill="#94a3b8" font-size="13">⑤ CPU 执行</text>
+<text x="68"   y="22" text-anchor="middle" fill="#94a3b8" font-size="14">① 硬件</text>
+<text x="306"  y="22" text-anchor="middle" fill="#94a3b8" font-size="14">② 协议解码</text>
+<text x="560"  y="22" text-anchor="middle" fill="#94a3b8" font-size="14">③ 字符解析</text>
+<text x="892"  y="22" text-anchor="middle" fill="#94a3b8" font-size="14">④ UI + 指令解析</text>
+<text x="1328" y="22" text-anchor="middle" fill="#94a3b8" font-size="14">⑤ CPU 执行</text>
 
 <!-- ① PS/2 Keyboard: x=15-121 -->
 <rect x="15"  y="38" width="106" height="115" rx="10" fill="white" stroke="#2563eb" stroke-width="2"/>
-<text x="68"  y="63"  text-anchor="middle" fill="#1e40af" font-size="15" font-weight="bold">PS/2 键盘</text>
-<text x="68"  y="85"  text-anchor="middle" fill="#334155" font-size="13">ps2_clk</text>
-<text x="68"  y="104" text-anchor="middle" fill="#334155" font-size="13">ps2_data</text>
-<text x="68"  y="140" text-anchor="middle" fill="#64748b" font-size="12">(物理硬件)</text>
+<text x="68"  y="64"  text-anchor="middle" fill="#1e40af" font-size="16" font-weight="700">PS/2 键盘</text>
+<text x="68"  y="86"  text-anchor="middle" fill="#334155" font-size="14">ps2_clk</text>
+<text x="68"  y="106" text-anchor="middle" fill="#334155" font-size="14">ps2_data</text>
+<text x="68"  y="140" text-anchor="middle" fill="#64748b" font-size="13">(物理硬件)</text>
 
-<!-- ① → ② : 109px tail -->
-<line x1="121" y1="96" x2="230" y2="96" stroke="#15803d" stroke-width="3" marker-end="url(#b1)"/>
-<text x="175" y="89" text-anchor="middle" fill="#15803d" font-size="13" font-weight="bold">串行</text>
+<!-- ① → ② : 110px gap -->
+<line x1="121" y1="96" x2="231" y2="96" stroke="#15803d" stroke-width="3" marker-end="url(#b1)"/>
+<text x="176" y="88" text-anchor="middle" fill="#15803d" font-size="14" font-weight="700">串行</text>
 
-<!-- ② PS2_receiver: x=230-393 -->
-<rect x="230" y="38" width="163" height="135" rx="10" fill="white" stroke="#2563eb" stroke-width="2"/>
-<text x="311" y="64"  text-anchor="middle" fill="#1e40af" font-size="15" font-weight="bold">PS2_receiver</text>
-<text x="311" y="85"  text-anchor="middle" fill="#334155" font-size="13">起始/停止/奇偶</text>
-<text x="311" y="103" text-anchor="middle" fill="#334155" font-size="13">2级同步寄存器</text>
-<text x="311" y="121" text-anchor="middle" fill="#334155" font-size="13">超时复位 ~1ms</text>
-<text x="237" y="155" fill="#94a3b8" font-size="11">→ key_data[7:0]</text>
-<text x="237" y="169" fill="#94a3b8" font-size="11">→ key_valid</text>
+<!-- ② PS2_receiver: x=231-401 -->
+<rect x="231" y="38" width="170" height="140" rx="10" fill="white" stroke="#2563eb" stroke-width="2"/>
+<text x="316" y="65"  text-anchor="middle" fill="#1e40af" font-size="16" font-weight="700">PS2_receiver</text>
+<text x="316" y="87"  text-anchor="middle" fill="#334155" font-size="14">起始/停止/奇偶</text>
+<text x="316" y="106" text-anchor="middle" fill="#334155" font-size="14">2级同步寄存器</text>
+<text x="316" y="125" text-anchor="middle" fill="#334155" font-size="14">超时复位 ~1ms</text>
+<text x="238" y="160" fill="#94a3b8" font-size="12">→ key_data[7:0]</text>
+<text x="238" y="175" fill="#94a3b8" font-size="12">→ key_valid</text>
 
-<!-- ② → ③ : 110px tail -->
-<line x1="393" y1="103" x2="503" y2="103" stroke="#15803d" stroke-width="3" marker-end="url(#b1)"/>
-<text x="448" y="95"  text-anchor="middle" fill="#15803d" font-size="13">key_data</text>
-<text x="448" y="115" text-anchor="middle" fill="#15803d" font-size="13">key_valid</text>
+<!-- ② → ③ : 110px gap -->
+<line x1="401" y1="106" x2="511" y2="106" stroke="#15803d" stroke-width="3" marker-end="url(#b1)"/>
+<text x="456" y="97"  text-anchor="middle" fill="#15803d" font-size="13">key_data</text>
+<text x="456" y="118" text-anchor="middle" fill="#15803d" font-size="13">key_valid</text>
 
-<!-- ③ ps2_decoder: x=503-668 -->
-<rect x="503" y="38" width="165" height="160" rx="10" fill="white" stroke="#2563eb" stroke-width="2"/>
-<text x="585" y="64"  text-anchor="middle" fill="#1e40af" font-size="15" font-weight="bold">ps2_decoder</text>
-<text x="585" y="85"  text-anchor="middle" fill="#334155" font-size="13">Set-2 扫描码</text>
-<rect x="515" y="95"  width="141" height="65" rx="4" fill="#fffbeb" stroke="#d97706" stroke-width="1.5"/>
-<text x="585" y="114" text-anchor="middle" fill="#92400e" font-size="12" font-weight="bold">状态机</text>
-<text x="585" y="130" text-anchor="middle" fill="#78350f" font-size="11">IDLE / GOT_E0</text>
-<text x="585" y="146" text-anchor="middle" fill="#78350f" font-size="11">GOT_F0 / E0_F0</text>
-<text x="510" y="177" fill="#94a3b8" font-size="11">→ char_data[5:0]</text>
-<text x="510" y="190" fill="#94a3b8" font-size="11">→ is_enter / is_backspace</text>
+<!-- ③ ps2_decoder: x=511-681 -->
+<rect x="511" y="38" width="170" height="165" rx="10" fill="white" stroke="#2563eb" stroke-width="2"/>
+<text x="596" y="65"  text-anchor="middle" fill="#1e40af" font-size="16" font-weight="700">ps2_decoder</text>
+<text x="596" y="87"  text-anchor="middle" fill="#334155" font-size="14">Set-2 扫描码</text>
+<!-- State machine inside -->
+<rect x="524" y="97"  width="144" height="70" rx="4" fill="#fffbeb" stroke="#d97706" stroke-width="1.5"/>
+<text x="596" y="117" text-anchor="middle" fill="#92400e" font-size="13" font-weight="700">状态机</text>
+<text x="596" y="135" text-anchor="middle" fill="#78350f" font-size="12">IDLE / GOT_E0</text>
+<text x="596" y="152" text-anchor="middle" fill="#78350f" font-size="12">GOT_F0 / E0_F0</text>
+<text x="518" y="182" fill="#94a3b8" font-size="12">→ char_data[5:0]</text>
+<text x="518" y="196" fill="#94a3b8" font-size="12">→ is_enter / is_backspace</text>
 
-<!-- ③ → ④ : 109px tail -->
-<line x1="668" y1="108" x2="777" y2="108" stroke="#15803d" stroke-width="3" marker-end="url(#b1)"/>
-<text x="722" y="100" text-anchor="middle" fill="#15803d" font-size="13">char_data</text>
-<text x="722" y="120" text-anchor="middle" fill="#15803d" font-size="13">is_enter…</text>
+<!-- ③ → ④ : 110px gap -->
+<line x1="681" y1="110" x2="791" y2="110" stroke="#15803d" stroke-width="3" marker-end="url(#b1)"/>
+<text x="736" y="101" text-anchor="middle" fill="#15803d" font-size="13">char_data</text>
+<text x="736" y="123" text-anchor="middle" fill="#15803d" font-size="13">is_enter…</text>
 
-<!-- ④ vga_display: x=777-1087 -->
-<rect x="777" y="38" width="310" height="375" rx="10" fill="white" stroke="#2563eb" stroke-width="2"/>
-<text x="932" y="64"  text-anchor="middle" fill="#1e40af" font-size="15" font-weight="bold">vga_display</text>
-<text x="932" y="82"  text-anchor="middle" fill="#64748b" font-size="12">输入处理 + 指令解析</text>
+<!-- ④ vga_display: x=791-1107 -->
+<rect x="791" y="38" width="316" height="385" rx="10" fill="white" stroke="#2563eb" stroke-width="2"/>
+<text x="949" y="65"  text-anchor="middle" fill="#1e40af" font-size="16" font-weight="700">vga_display</text>
+<text x="949" y="84"  text-anchor="middle" fill="#64748b" font-size="13">输入处理 + 指令解析</text>
 
-<!-- input_buf -->
-<rect x="793" y="92"  width="278" height="52" rx="6" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.5"/>
-<text x="932" y="115" text-anchor="middle" fill="#14532d" font-size="14" font-weight="bold">input_buf[0:31]</text>
-<text x="932" y="135" text-anchor="middle" fill="#065f46" font-size="12">字体索引缓冲 (32字符)</text>
+<rect x="806" y="94"  width="286" height="55" rx="6" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.5"/>
+<text x="949" y="118" text-anchor="middle" fill="#14532d" font-size="14" font-weight="700">input_buf[0:31]</text>
+<text x="949" y="139" text-anchor="middle" fill="#065f46" font-size="13">字体索引缓冲 (32字符)</text>
 
-<!-- input_hist -->
-<rect x="793" y="157" width="278" height="52" rx="6" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
-<text x="932" y="180" text-anchor="middle" fill="#1e40af" font-size="14" font-weight="bold">input_hist[0:15]</text>
-<text x="932" y="200" text-anchor="middle" fill="#1d4ed8" font-size="12">历史 16 条指令环形缓冲</text>
+<rect x="806" y="162" width="286" height="55" rx="6" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+<text x="949" y="186" text-anchor="middle" fill="#1e40af" font-size="14" font-weight="700">input_hist[0:15]</text>
+<text x="949" y="207" text-anchor="middle" fill="#1d4ed8" font-size="13">历史 16 条指令环形缓冲</text>
 
-<!-- parser -->
-<rect x="793" y="222" width="278" height="72" rx="6" fill="#fdf2f8" stroke="#db2777" stroke-width="1.5"/>
-<text x="932" y="246" text-anchor="middle" fill="#9d174d" font-size="14" font-weight="bold">指令解析器</text>
-<text x="932" y="266" text-anchor="middle" fill="#be185d" font-size="12">识别助记符 LOAD/ADD/…</text>
-<text x="932" y="284" text-anchor="middle" fill="#be185d" font-size="12">解析 [addr] / port / imm</text>
+<rect x="806" y="230" width="286" height="75" rx="6" fill="#fdf2f8" stroke="#db2777" stroke-width="1.5"/>
+<text x="949" y="255" text-anchor="middle" fill="#9d174d" font-size="14" font-weight="700">指令解析器</text>
+<text x="949" y="276" text-anchor="middle" fill="#be185d" font-size="13">识别助记符 LOAD/ADD/…</text>
+<text x="949" y="295" text-anchor="middle" fill="#be185d" font-size="13">解析 [addr] / port / imm</text>
 
-<!-- inj signals box -->
-<rect x="793" y="308" width="278" height="62" rx="6" fill="#f5f3ff" stroke="#7c3aed" stroke-width="2"/>
-<text x="932" y="332" text-anchor="middle" fill="#4c1d95" font-size="14" font-weight="bold">注入信号</text>
-<text x="932" y="352" text-anchor="middle" fill="#5b21b6" font-size="12">inj_req (高电平保持)</text>
-<text x="932" y="369" text-anchor="middle" fill="#5b21b6" font-size="12">inj_instr[15:0]</text>
+<rect x="806" y="318" width="286" height="65" rx="6" fill="#f5f3ff" stroke="#7c3aed" stroke-width="2"/>
+<text x="949" y="342" text-anchor="middle" fill="#4c1d95" font-size="14" font-weight="700">注入信号</text>
+<text x="949" y="362" text-anchor="middle" fill="#5b21b6" font-size="13">inj_req (高电平保持)</text>
+<text x="949" y="378" text-anchor="middle" fill="#5b21b6" font-size="13">inj_instr[15:0]</text>
 
-<text x="932" y="400" text-anchor="middle" fill="#64748b" font-size="12">Enter 键 → 触发解析 → 置 inj_req</text>
+<text x="949" y="409" text-anchor="middle" fill="#64748b" font-size="13">Enter 键 → 触发解析 → 置 inj_req</text>
 
 <!-- exec_mode guard -->
-<rect x="777" y="430" width="310" height="44" rx="6" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
-<text x="932" y="451" text-anchor="middle" fill="#78350f" font-size="14" font-weight="bold">exec_mode == 01 守卫</text>
-<text x="932" y="469" text-anchor="middle" fill="#92400e" font-size="12">仅指令单步模式接受输入</text>
+<rect x="791" y="438" width="316" height="48" rx="6" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
+<text x="949" y="460" text-anchor="middle" fill="#78350f" font-size="14" font-weight="700">exec_mode == 01 守卫</text>
+<text x="949" y="479" text-anchor="middle" fill="#92400e" font-size="13">仅指令单步模式接受输入</text>
 
-<!-- ④ → ⑤ injection: 110px tail, FROM inj signals right edge -->
-<line x1="1087" y1="339" x2="1197" y2="339" stroke="#6d28d9" stroke-width="3.5" marker-end="url(#b3)"/>
-<text x="1142" y="329" text-anchor="middle" fill="#6d28d9" font-size="13" font-weight="bold">inj_req</text>
-<text x="1142" y="353" text-anchor="middle" fill="#6d28d9" font-size="13">inj_instr[15:0]</text>
+<!-- ④ → ⑤ injection: 110px gap, from inj signals right edge -->
+<line x1="1107" y1="350" x2="1217" y2="350" stroke="#6d28d9" stroke-width="3.5" marker-end="url(#b3)"/>
+<text x="1162" y="340" text-anchor="middle" fill="#6d28d9" font-size="14" font-weight="700">inj_req</text>
+<text x="1162" y="365" text-anchor="middle" fill="#6d28d9" font-size="13">inj_instr[15:0]</text>
 
-<!-- inject_done back: 110px tail -->
-<line x1="1197" y1="390" x2="1087" y2="390" stroke="#d97706" stroke-width="2.5" stroke-dasharray="6,3" marker-end="url(#b4)"/>
-<text x="1142" y="380" text-anchor="middle" fill="#d97706" font-size="13">inject_done</text>
+<!-- inject_done back: 110px gap -->
+<line x1="1217" y1="403" x2="1107" y2="403" stroke="#d97706" stroke-width="2.5" stroke-dasharray="6,3" marker-end="url(#b4)"/>
+<text x="1162" y="394" text-anchor="middle" fill="#d97706" font-size="14" font-weight="700">inject_done</text>
 
-<!-- ⑤ CPU_top: x=1197-1305 -->
-<rect x="1197" y="38"  width="108" height="400" rx="10" fill="white" stroke="#2563eb" stroke-width="2"/>
-<text x="1251" y="62"  text-anchor="middle" fill="#1e40af" font-size="14" font-weight="bold">CPU_top</text>
+<!-- ⑤ CPU_top: x=1217-1437 (220px wide, sub-boxes 194px wide) -->
+<rect x="1217" y="38"  width="220" height="410" rx="10" fill="white" stroke="#2563eb" stroke-width="2"/>
+<text x="1327" y="64"  text-anchor="middle" fill="#1e40af" font-size="16" font-weight="700">CPU_top</text>
 
 <!-- ControlUnit inject logic -->
-<rect x="1209" y="75"  width="84" height="140" rx="6" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.5"/>
-<text x="1251" y="97"  text-anchor="middle" fill="#4c1d95" font-size="13" font-weight="bold">ControlUnit</text>
-<text x="1251" y="115" text-anchor="middle" fill="#5b21b6" font-size="11">inject_req</text>
-<text x="1251" y="130" text-anchor="middle" fill="#5b21b6" font-size="11">上升沿检测</text>
-<text x="1251" y="148" text-anchor="middle" fill="#5b21b6" font-size="11">inject_trigger</text>
-<text x="1251" y="163" text-anchor="middle" fill="#5b21b6" font-size="11">injecting 标志</text>
-<text x="1251" y="181" text-anchor="middle" fill="#d97706" font-size="11">C2→inject_done</text>
+<rect x="1230" y="78"  width="194" height="148" rx="6" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.5"/>
+<text x="1327" y="102" text-anchor="middle" fill="#4c1d95" font-size="14" font-weight="700">ControlUnit</text>
+<text x="1327" y="122" text-anchor="middle" fill="#5b21b6" font-size="13">inject_req 上升沿检测</text>
+<text x="1327" y="141" text-anchor="middle" fill="#5b21b6" font-size="13">inject_trigger 单次脉冲</text>
+<text x="1327" y="160" text-anchor="middle" fill="#5b21b6" font-size="13">injecting 标志</text>
+<text x="1327" y="179" text-anchor="middle" fill="#d97706" font-size="13">C2 → inject_done 脉冲</text>
 
-<!-- Fetch stage box -->
-<rect x="1209" y="228" width="84" height="95" rx="6" fill="#fffbeb" stroke="#d97706" stroke-width="1.5"/>
-<text x="1251" y="249" text-anchor="middle" fill="#78350f" font-size="13" font-weight="bold">取指 C3</text>
-<text x="1251" y="267" text-anchor="middle" fill="#92400e" font-size="11">injecting=1:</text>
-<text x="1251" y="283" text-anchor="middle" fill="#92400e" font-size="11">MBR←inject</text>
-<text x="1251" y="315" text-anchor="middle" fill="#64748b" font-size="10">否则: IM[MAR]</text>
+<!-- Fetch stage -->
+<rect x="1230" y="240" width="194" height="100" rx="6" fill="#fffbeb" stroke="#d97706" stroke-width="1.5"/>
+<text x="1327" y="263" text-anchor="middle" fill="#78350f" font-size="14" font-weight="700">取指阶段 C3</text>
+<text x="1327" y="284" text-anchor="middle" fill="#92400e" font-size="13">injecting=1: MBR←inject_instr</text>
+<text x="1327" y="302" text-anchor="middle" fill="#92400e" font-size="13">否则: MBR ← IM[MAR]</text>
+<text x="1327" y="332" text-anchor="middle" fill="#64748b" font-size="12">(C3 微操作控制)</text>
 
-<!-- normal execution note -->
-<rect x="1209" y="338" width="84" height="82" rx="6" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.5"/>
-<text x="1251" y="358" text-anchor="middle" fill="#14532d" font-size="12" font-weight="bold">正常执行</text>
-<text x="1251" y="375" text-anchor="middle" fill="#065f46" font-size="10">IR←MBR[15:8]</text>
-<text x="1251" y="391" text-anchor="middle" fill="#065f46" font-size="10">MAR←MBR[7:0]</text>
-<text x="1251" y="409" text-anchor="middle" fill="#065f46" font-size="10">微程序执行</text>
+<!-- Normal execution -->
+<rect x="1217" y="355" width="220" height="85" rx="6" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.5"/>
+<text x="1327" y="377" text-anchor="middle" fill="#14532d" font-size="14" font-weight="700">正常执行</text>
+<text x="1327" y="397" text-anchor="middle" fill="#065f46" font-size="13">IR←MBR[15:8]  MAR←MBR[7:0]</text>
+<text x="1327" y="416" text-anchor="middle" fill="#065f46" font-size="13">微程序正常执行指令</text>
 
 <!-- ControlUnit → Fetch -->
-<line x1="1251" y1="215" x2="1251" y2="228" stroke="#1d4ed8" stroke-width="2" marker-end="url(#b2)"/>
+<line x1="1327" y1="226" x2="1327" y2="240" stroke="#1d4ed8" stroke-width="2" marker-end="url(#b2)"/>
 <!-- Fetch → Exec -->
-<line x1="1251" y1="323" x2="1251" y2="338" stroke="#1d4ed8" stroke-width="2" marker-end="url(#b2)"/>
+<line x1="1327" y1="340" x2="1327" y2="355" stroke="#1d4ed8" stroke-width="2" marker-end="url(#b2)"/>
 
 <!-- can_step note at bottom -->
-<rect x="15"  y="510" width="1080" height="140" rx="10" fill="white" stroke="#93c5fd" stroke-width="1.5"/>
-<text x="555" y="533" text-anchor="middle" fill="#1e40af" font-size="15" font-weight="bold">ControlUnit · can_step 逻辑</text>
-<text x="35"  y="559" fill="#334155" font-size="14" font-family="monospace">exec_mode=00:  can_step = TRUE                              (自由运行)</text>
-<text x="35"  y="583" fill="#334155" font-size="14" font-family="monospace">exec_mode=01:  can_step = instr_running || step_pulse || inject_trigger</text>
-<text x="35"  y="607" fill="#334155" font-size="14" font-family="monospace">exec_mode=10:  can_step = step_pulse                        (每次仅一微步)</text>
-<text x="555" y="637" text-anchor="middle" fill="#64748b" font-size="12">PC 在注入执行期间被抑制自增 (C6 被 injecting_w 屏蔽)</text>
+<rect x="15"  y="520" width="1222" height="145" rx="10" fill="white" stroke="#93c5fd" stroke-width="1.5"/>
+<text x="621" y="544" text-anchor="middle" fill="#1e40af" font-size="16" font-weight="700">ControlUnit · can_step 逻辑</text>
+<text x="35"  y="571" fill="#334155" font-size="14" font-family="'Courier New',monospace">exec_mode=00:  can_step = TRUE                                (自由运行)</text>
+<text x="35"  y="595" fill="#334155" font-size="14" font-family="'Courier New',monospace">exec_mode=01:  can_step = instr_running || step_pulse || inject_trigger</text>
+<text x="35"  y="619" fill="#334155" font-size="14" font-family="'Courier New',monospace">exec_mode=10:  can_step = step_pulse                          (每次仅一微步)</text>
+<text x="621" y="649" text-anchor="middle" fill="#64748b" font-size="13">PC 在注入执行期间被抑制自增 (C6 被 injecting_w 屏蔽)</text>
 </svg>
 </div>
 
