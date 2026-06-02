@@ -55,12 +55,12 @@ svg{display:block;margin:0 auto}
 <!-- Physical input labels (top) -->
 <text x="285" y="17" text-anchor="middle" fill="#64748b" font-size="13">clk · reset</text>
 <line x1="285" y1="19" x2="285" y2="50" stroke="#94a3b8" stroke-width="2" marker-end="url(#c5)"/>
-<text x="410" y="17" text-anchor="middle" fill="#d97706"  font-size="13">exec_mode (sw[15:14])</text>
+<text x="375" y="17" text-anchor="middle" fill="#d97706"  font-size="13">exec_mode (sw[15:14])</text>
 <line x1="410" y1="19" x2="410" y2="50" stroke="#d97706" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#c3)"/>
 <text x="530" y="17" text-anchor="middle" fill="#64748b" font-size="13">port_in[0] (sw[11:0])</text>
 <line x1="530" y1="19" x2="530" y2="50" stroke="#1d4ed8" stroke-width="2" marker-end="url(#c1)"/>
-<text x="96"  y="72" text-anchor="middle" fill="#d97706" font-size="13">btn_step</text>
-<line x1="96"  y1="76" x2="96"  y2="90" stroke="#d97706" stroke-width="2" marker-end="url(#c3)"/>
+<text x="78"  y="72" text-anchor="middle" fill="#d97706" font-size="13">btn_step</text>
+<line x1="78"  y1="76" x2="78"  y2="90" stroke="#d97706" stroke-width="2" marker-end="url(#c3)"/>
 
 <!-- ── PS/2 chain moved to far right, beside vga_display ── -->
 <text x="1081" y="252" text-anchor="middle" fill="#64748b" font-size="13">ps2_clk / ps2_data</text>
@@ -78,22 +78,24 @@ svg{display:block;margin:0 auto}
 <text x="1081" y="412" text-anchor="middle" fill="#475569" font-size="13">Set-2 扫描码解析</text>
 <text x="1081" y="429" text-anchor="middle" fill="#64748b" font-size="12">char_data · is_enter…</text>
 
-<!-- ── btn_debounce ── -->
-<rect x="18"  y="90" width="156" height="65" rx="10" fill="white" stroke="#2563eb" stroke-width="2"/>
-<text x="96"  y="116" text-anchor="middle" fill="#1e40af" font-size="15" font-weight="bold">btn_debounce</text>
-<text x="96"  y="136" text-anchor="middle" fill="#475569" font-size="13">去抖 + 边沿检测</text>
-<text x="96"  y="152" text-anchor="middle" fill="#d97706" font-size="13" font-weight="bold">→ step_pulse</text>
+<!-- ── btn_debounce (shifted left 18px to give step_pulse label room) ── -->
+<rect x="0"   y="90" width="156" height="65" rx="10" fill="white" stroke="#2563eb" stroke-width="2"/>
+<text x="78"  y="116" text-anchor="middle" fill="#1e40af" font-size="15" font-weight="bold">btn_debounce</text>
+<text x="78"  y="136" text-anchor="middle" fill="#475569" font-size="13">去抖 + 边沿检测</text>
+<text x="78"  y="152" text-anchor="middle" fill="#d97706" font-size="13" font-weight="bold">→ step_pulse</text>
 
 <!-- PS2 chain arrow: receiver → decoder -->
 <line x1="1081" y1="346" x2="1081" y2="366" stroke="#15803d" stroke-width="2.5" marker-end="url(#c2)"/>
 
 <!-- ps2_decoder → vga_display Panel D (short, direct, leftward) -->
 <line x1="1006" y1="402" x2="960" y2="402" stroke="#15803d" stroke-width="2.5" marker-end="url(#c2)"/>
-<text x="983" y="394" text-anchor="middle" fill="#15803d" font-size="12" font-weight="bold">char_data</text>
+<!-- start-align label at x=962 (just right of vga_display right edge x=960) so it is not covered -->
+<text x="962" y="395" text-anchor="start" fill="#15803d" font-size="12" font-weight="bold">char_data</text>
 
 <!-- btn_debounce → CPU_top (ControlUnit) -->
-<line x1="174" y1="120" x2="226" y2="112" stroke="#d97706" stroke-width="2.5" marker-end="url(#c3)"/>
-<text x="200" y="105" text-anchor="middle" fill="#d97706" font-size="13">step_pulse</text>
+<line x1="156" y1="120" x2="226" y2="112" stroke="#d97706" stroke-width="2.5" marker-end="url(#c3)"/>
+<!-- right-align label so it ends just before CPU_top left edge (x=212), stays above the white fill -->
+<text x="210" y="105" text-anchor="end" fill="#d97706" font-size="13">step_pulse</text>
 
 <!-- ── CPU_top container ── -->
 <rect x="212" y="50"  width="380" height="420" rx="12" fill="white" stroke="#2563eb" stroke-width="2.5" stroke-dasharray="9,4"/>
@@ -403,16 +405,17 @@ svg{display:block;margin:0 auto}
 <line x1="825" y1="420" x2="825" y2="456" stroke="#1d4ed8" stroke-width="2" marker-end="url(#d1)"/>
 <text x="830" y="442" fill="#64748b" font-size="12">A</text>
 
-<!-- ALU → ACC -->
-<path d="M 906,485 L 940,485 L 940,398 L 864,398" fill="none" stroke="#16a34a" stroke-width="2.5" marker-end="url(#d3)"/>
-<text x="940" y="450" fill="#16a34a" font-size="13" transform="rotate(-90,940,450)">C9/C13/…</text>
+<!-- ALU → ACC (elbow routed to x=956, clear of MR at x=960) -->
+<path d="M 906,485 L 956,485 L 956,398 L 864,398" fill="none" stroke="#16a34a" stroke-width="2.5" marker-end="url(#d3)"/>
+<!-- C9/C13 label: horizontal, placed to the right of the vertical segment above MR box -->
+<text x="960" y="443" text-anchor="start" fill="#16a34a" font-size="13">C9/C13/…</text>
 
-<!-- MR -->
-<rect x="940" y="462" width="78" height="44" rx="4" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
-<text x="979" y="484" text-anchor="middle" fill="#92400e" font-size="15" font-weight="bold">MR</text>
-<text x="979" y="500" text-anchor="middle" fill="#78350f" font-size="12">MPY 高位</text>
-<line x1="906" y1="500" x2="940" y2="498" stroke="#16a34a" stroke-width="2" marker-end="url(#d3)"/>
-<text x="924" y="494" fill="#16a34a" font-size="11">C19</text>
+<!-- MR (moved right to x=960 to clear the ALU→ACC return path) -->
+<rect x="960" y="462" width="78" height="44" rx="4" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
+<text x="999" y="484" text-anchor="middle" fill="#92400e" font-size="15" font-weight="bold">MR</text>
+<text x="999" y="500" text-anchor="middle" fill="#78350f" font-size="12">MPY 高位</text>
+<line x1="906" y1="500" x2="960" y2="498" stroke="#16a34a" stroke-width="2" marker-end="url(#d3)"/>
+<text x="935" y="494" fill="#16a34a" font-size="11">C19</text>
 
 <!-- Store path -->
 <path d="M 825,376 L 825,358 L 551,358 L 551,410" fill="none" stroke="#db2777" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#d4)"/>
