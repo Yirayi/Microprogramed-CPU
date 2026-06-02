@@ -313,119 +313,119 @@ svg{display:block;margin:0 auto}
 <text x="724" y="226" text-anchor="middle" fill="#d97706" font-size="14" font-weight="bold">指令专属微码</text>
 <text x="724" y="244" text-anchor="middle" fill="#d97706" font-size="13">开始执行</text>
 
-<!-- ══ DATA PATH ══ -->
-<text x="20"  y="310" fill="#16a34a" font-size="14" font-weight="bold">数据路径 (执行阶段)</text>
-<line x1="18" y1="315" x2="1022" y2="315" stroke="#cbd5e0" stroke-width="1.5"/>
+<!-- ══ DATA PATH (shifted +50 so PC self-loop / store-path no longer overflow above) ══ -->
+<text x="20"  y="320" fill="#16a34a" font-size="14" font-weight="bold">数据路径 (执行阶段)</text>
+<line x1="18" y1="325" x2="1022" y2="325" stroke="#cbd5e0" stroke-width="1.5"/>
 
 <!-- PC -->
-<rect x="22"  y="326" width="78" height="44" rx="4" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
-<text x="61"  y="348" text-anchor="middle" fill="#92400e" font-size="15" font-weight="bold">PC</text>
-<text x="61"  y="364" text-anchor="middle" fill="#78350f" font-size="12">[7:0]</text>
+<rect x="22"  y="376" width="78" height="44" rx="4" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
+<text x="61"  y="398" text-anchor="middle" fill="#92400e" font-size="15" font-weight="bold">PC</text>
+<text x="61"  y="414" text-anchor="middle" fill="#78350f" font-size="12">[7:0]</text>
 
 <!-- MAR -->
-<rect x="148" y="326" width="78" height="44" rx="4" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
-<text x="187" y="348" text-anchor="middle" fill="#92400e" font-size="15" font-weight="bold">MAR</text>
-<text x="187" y="364" text-anchor="middle" fill="#78350f" font-size="12">[7:0]</text>
+<rect x="148" y="376" width="78" height="44" rx="4" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
+<text x="187" y="398" text-anchor="middle" fill="#92400e" font-size="15" font-weight="bold">MAR</text>
+<text x="187" y="414" text-anchor="middle" fill="#78350f" font-size="12">[7:0]</text>
 
 <!-- PC → MAR (C10) -->
-<line x1="100" y1="348" x2="148" y2="348" stroke="#1d4ed8" stroke-width="2.5" marker-end="url(#d1)"/>
-<text x="124" y="340" text-anchor="middle" fill="#ca8a04" font-size="13" font-weight="bold">C10</text>
+<line x1="100" y1="398" x2="148" y2="398" stroke="#1d4ed8" stroke-width="2.5" marker-end="url(#d1)"/>
+<text x="124" y="390" text-anchor="middle" fill="#ca8a04" font-size="13" font-weight="bold">C10</text>
 
 <!-- PC self-loop (C6: PC+1) -->
-<path d="M 61,326 C 61,298 105,298 105,326" fill="none" stroke="#16a34a" stroke-width="2" marker-end="url(#d3)"/>
-<text x="83"  y="294" text-anchor="middle" fill="#16a34a" font-size="13">C6: PC+1</text>
+<path d="M 61,376 C 61,348 105,348 105,376" fill="none" stroke="#16a34a" stroke-width="2" marker-end="url(#d3)"/>
+<text x="83"  y="344" text-anchor="middle" fill="#16a34a" font-size="13">C6: PC+1</text>
 
 <!-- JMP: MAR → PC -->
-<path d="M 187,370 C 187,402 61,402 61,370" fill="none" stroke="#db2777" stroke-width="2" marker-end="url(#d4)"/>
-<text x="124" y="414" text-anchor="middle" fill="#db2777" font-size="13">C22:JMP / C23:JMPGEZ</text>
+<path d="M 187,420 C 187,452 61,452 61,420" fill="none" stroke="#db2777" stroke-width="2" marker-end="url(#d4)"/>
+<text x="124" y="464" text-anchor="middle" fill="#db2777" font-size="13">C22:JMP / C23:JMPGEZ</text>
 
 <!-- InstructionMemory -->
-<rect x="278" y="312" width="178" height="54" rx="0" fill="white" stroke="#7c3aed" stroke-width="2"/>
-<rect x="281" y="315" width="172" height="48" fill="none" stroke="#7c3aed" stroke-width="0.8" stroke-dasharray="2,2"/>
-<text x="367" y="337" text-anchor="middle" fill="#4c1d95" font-size="14" font-weight="bold">InstructionMemory</text>
-<text x="367" y="355" text-anchor="middle" fill="#5b21b6" font-size="12">addr=MAR · is_fetch</text>
+<rect x="278" y="362" width="178" height="54" rx="0" fill="white" stroke="#7c3aed" stroke-width="2"/>
+<rect x="281" y="365" width="172" height="48" fill="none" stroke="#7c3aed" stroke-width="0.8" stroke-dasharray="2,2"/>
+<text x="367" y="387" text-anchor="middle" fill="#4c1d95" font-size="14" font-weight="bold">InstructionMemory</text>
+<text x="367" y="405" text-anchor="middle" fill="#5b21b6" font-size="12">addr=MAR · is_fetch</text>
 
 <!-- DataMemory -->
-<rect x="278" y="402" width="178" height="54" rx="0" fill="white" stroke="#7c3aed" stroke-width="2"/>
-<rect x="281" y="405" width="172" height="48" fill="none" stroke="#7c3aed" stroke-width="0.8" stroke-dasharray="2,2"/>
-<text x="367" y="425" text-anchor="middle" fill="#4c1d95" font-size="14" font-weight="bold">DataMemory</text>
-<text x="367" y="443" text-anchor="middle" fill="#5b21b6" font-size="12">addr=MAR · R/W</text>
+<rect x="278" y="452" width="178" height="54" rx="0" fill="white" stroke="#7c3aed" stroke-width="2"/>
+<rect x="281" y="455" width="172" height="48" fill="none" stroke="#7c3aed" stroke-width="0.8" stroke-dasharray="2,2"/>
+<text x="367" y="475" text-anchor="middle" fill="#4c1d95" font-size="14" font-weight="bold">DataMemory</text>
+<text x="367" y="493" text-anchor="middle" fill="#5b21b6" font-size="12">addr=MAR · R/W</text>
 
 <!-- MAR → memories -->
-<line x1="226" y1="345" x2="278" y2="339" stroke="#1d4ed8" stroke-width="2" marker-end="url(#d1)"/>
-<path d="M 226,355 L 252,355 L 252,429 L 278,429" fill="none" stroke="#1d4ed8" stroke-width="2" marker-end="url(#d1)"/>
+<line x1="226" y1="395" x2="278" y2="389" stroke="#1d4ed8" stroke-width="2" marker-end="url(#d1)"/>
+<path d="M 226,405 L 252,405 L 252,479 L 278,479" fill="none" stroke="#1d4ed8" stroke-width="2" marker-end="url(#d1)"/>
 
 <!-- MBR -->
-<rect x="508" y="360" width="86" height="44" rx="4" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
-<text x="551" y="382" text-anchor="middle" fill="#92400e" font-size="15" font-weight="bold">MBR</text>
-<text x="551" y="397" text-anchor="middle" fill="#78350f" font-size="12">[15:0]</text>
+<rect x="508" y="410" width="86" height="44" rx="4" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
+<text x="551" y="432" text-anchor="middle" fill="#92400e" font-size="15" font-weight="bold">MBR</text>
+<text x="551" y="447" text-anchor="middle" fill="#78350f" font-size="12">[15:0]</text>
 
 <!-- IM → MBR -->
-<line x1="456" y1="339" x2="508" y2="373" stroke="#1d4ed8" stroke-width="2" marker-end="url(#d1)"/>
-<text x="492" y="352" fill="#ca8a04" font-size="12">C3·fetch</text>
+<line x1="456" y1="389" x2="508" y2="423" stroke="#1d4ed8" stroke-width="2" marker-end="url(#d1)"/>
+<text x="492" y="402" fill="#ca8a04" font-size="12">C3·fetch</text>
 <!-- DM → MBR -->
-<line x1="456" y1="429" x2="508" y2="393" stroke="#1d4ed8" stroke-width="2" marker-end="url(#d1)"/>
-<text x="492" y="427" fill="#ca8a04" font-size="12">C3·exec</text>
+<line x1="456" y1="479" x2="508" y2="443" stroke="#1d4ed8" stroke-width="2" marker-end="url(#d1)"/>
+<text x="492" y="477" fill="#ca8a04" font-size="12">C3·exec</text>
 
 <!-- IR -->
-<rect x="648" y="326" width="78" height="44" rx="4" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
-<text x="687" y="348" text-anchor="middle" fill="#92400e" font-size="15" font-weight="bold">IR</text>
-<text x="687" y="364" text-anchor="middle" fill="#78350f" font-size="12">[7:0]</text>
+<rect x="648" y="376" width="78" height="44" rx="4" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
+<text x="687" y="398" text-anchor="middle" fill="#92400e" font-size="15" font-weight="bold">IR</text>
+<text x="687" y="414" text-anchor="middle" fill="#78350f" font-size="12">[7:0]</text>
 
 <!-- MBR → IR (C4) -->
-<line x1="594" y1="375" x2="648" y2="348" stroke="#1d4ed8" stroke-width="2" marker-end="url(#d1)"/>
-<text x="636" y="360" fill="#ca8a04" font-size="12">C4</text>
+<line x1="594" y1="425" x2="648" y2="398" stroke="#1d4ed8" stroke-width="2" marker-end="url(#d1)"/>
+<text x="636" y="410" fill="#ca8a04" font-size="12">C4</text>
 
 <!-- BR -->
-<rect x="648" y="412" width="78" height="44" rx="4" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
-<text x="687" y="434" text-anchor="middle" fill="#92400e" font-size="15" font-weight="bold">BR</text>
-<text x="687" y="450" text-anchor="middle" fill="#78350f" font-size="12">[15:0]</text>
+<rect x="648" y="462" width="78" height="44" rx="4" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
+<text x="687" y="484" text-anchor="middle" fill="#92400e" font-size="15" font-weight="bold">BR</text>
+<text x="687" y="500" text-anchor="middle" fill="#78350f" font-size="12">[15:0]</text>
 
 <!-- MBR → BR (C7) -->
-<line x1="594" y1="390" x2="648" y2="434" stroke="#1d4ed8" stroke-width="2" marker-end="url(#d1)"/>
-<text x="630" y="430" fill="#ca8a04" font-size="12">C7</text>
+<line x1="594" y1="440" x2="648" y2="484" stroke="#1d4ed8" stroke-width="2" marker-end="url(#d1)"/>
+<text x="630" y="480" fill="#ca8a04" font-size="12">C7</text>
 
 <!-- ACC -->
-<rect x="786" y="326" width="78" height="44" rx="4" fill="#fffbeb" stroke="#d97706" stroke-width="2.5"/>
-<text x="825" y="348" text-anchor="middle" fill="#92400e" font-size="16" font-weight="bold">ACC</text>
-<text x="825" y="364" text-anchor="middle" fill="#78350f" font-size="12">[15:0]</text>
+<rect x="786" y="376" width="78" height="44" rx="4" fill="#fffbeb" stroke="#d97706" stroke-width="2.5"/>
+<text x="825" y="398" text-anchor="middle" fill="#92400e" font-size="16" font-weight="bold">ACC</text>
+<text x="825" y="414" text-anchor="middle" fill="#78350f" font-size="12">[15:0]</text>
 
 <!-- ALU -->
-<rect x="786" y="406" width="120" height="58" rx="8" fill="white" stroke="#2563eb" stroke-width="2"/>
-<text x="846" y="432" text-anchor="middle" fill="#1e40af" font-size="15" font-weight="bold">ALU</text>
-<text x="846" y="452" text-anchor="middle" fill="#475569" font-size="12">A=ACC, B=BR</text>
+<rect x="786" y="456" width="120" height="58" rx="8" fill="white" stroke="#2563eb" stroke-width="2"/>
+<text x="846" y="482" text-anchor="middle" fill="#1e40af" font-size="15" font-weight="bold">ALU</text>
+<text x="846" y="502" text-anchor="middle" fill="#475569" font-size="12">A=ACC, B=BR</text>
 
 <!-- BR → ALU -->
-<line x1="726" y1="434" x2="786" y2="435" stroke="#1d4ed8" stroke-width="2" marker-end="url(#d1)"/>
-<text x="756" y="428" text-anchor="middle" fill="#64748b" font-size="12">B</text>
+<line x1="726" y1="484" x2="786" y2="485" stroke="#1d4ed8" stroke-width="2" marker-end="url(#d1)"/>
+<text x="756" y="478" text-anchor="middle" fill="#64748b" font-size="12">B</text>
 
 <!-- ACC → ALU -->
-<line x1="825" y1="370" x2="825" y2="406" stroke="#1d4ed8" stroke-width="2" marker-end="url(#d1)"/>
-<text x="830" y="392" fill="#64748b" font-size="12">A</text>
+<line x1="825" y1="420" x2="825" y2="456" stroke="#1d4ed8" stroke-width="2" marker-end="url(#d1)"/>
+<text x="830" y="442" fill="#64748b" font-size="12">A</text>
 
 <!-- ALU → ACC -->
-<path d="M 906,435 L 940,435 L 940,348 L 864,348" fill="none" stroke="#16a34a" stroke-width="2.5" marker-end="url(#d3)"/>
-<text x="940" y="400" fill="#16a34a" font-size="13" transform="rotate(-90,940,400)">C9/C13/…</text>
+<path d="M 906,485 L 940,485 L 940,398 L 864,398" fill="none" stroke="#16a34a" stroke-width="2.5" marker-end="url(#d3)"/>
+<text x="940" y="450" fill="#16a34a" font-size="13" transform="rotate(-90,940,450)">C9/C13/…</text>
 
 <!-- MR -->
-<rect x="940" y="412" width="78" height="44" rx="4" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
-<text x="979" y="434" text-anchor="middle" fill="#92400e" font-size="15" font-weight="bold">MR</text>
-<text x="979" y="450" text-anchor="middle" fill="#78350f" font-size="12">MPY 高位</text>
-<line x1="906" y1="450" x2="940" y2="448" stroke="#16a34a" stroke-width="2" marker-end="url(#d3)"/>
-<text x="924" y="444" fill="#16a34a" font-size="11">C19</text>
+<rect x="940" y="462" width="78" height="44" rx="4" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
+<text x="979" y="484" text-anchor="middle" fill="#92400e" font-size="15" font-weight="bold">MR</text>
+<text x="979" y="500" text-anchor="middle" fill="#78350f" font-size="12">MPY 高位</text>
+<line x1="906" y1="500" x2="940" y2="498" stroke="#16a34a" stroke-width="2" marker-end="url(#d3)"/>
+<text x="924" y="494" fill="#16a34a" font-size="11">C19</text>
 
 <!-- Store path -->
-<path d="M 825,326 L 825,308 L 551,308 L 551,360" fill="none" stroke="#db2777" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#d4)"/>
-<text x="690" y="302" text-anchor="middle" fill="#db2777" font-size="13">C11: MBR←ACC  →  C12: DM[MAR]←MBR</text>
+<path d="M 825,376 L 825,358 L 551,358 L 551,410" fill="none" stroke="#db2777" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#d4)"/>
+<text x="690" y="352" text-anchor="middle" fill="#db2777" font-size="13">C11: MBR←ACC  →  C12: DM[MAR]←MBR</text>
 
 <!-- LOADI note -->
-<rect x="22" y="492" width="242" height="38" rx="5" fill="#fefce8" stroke="#ca8a04" stroke-width="1.5"/>
-<text x="143" y="515" text-anchor="middle" fill="#713f12" font-size="13" font-weight="bold">LOADI: C24 → ACC ← sext(MAR[7:0])</text>
+<rect x="22" y="542" width="242" height="38" rx="5" fill="#fefce8" stroke="#ca8a04" stroke-width="1.5"/>
+<text x="143" y="565" text-anchor="middle" fill="#713f12" font-size="13" font-weight="bold">LOADI: C24 → ACC ← sext(MAR[7:0])</text>
 
 <!-- IN/OUT note -->
-<rect x="280" y="492" width="400" height="38" rx="5" fill="#fefce8" stroke="#ca8a04" stroke-width="1.5"/>
-<text x="480" y="512" text-anchor="middle" fill="#713f12" font-size="13" font-weight="bold">IN: C26→MBR←port_in[MAR]  →C7→BR  →C20→ACC</text>
-<text x="480" y="526" text-anchor="middle" fill="#92400e" font-size="12">OUT: C25→port_out[MAR]←ACC</text>
+<rect x="280" y="542" width="400" height="38" rx="5" fill="#fefce8" stroke="#ca8a04" stroke-width="1.5"/>
+<text x="480" y="562" text-anchor="middle" fill="#713f12" font-size="13" font-weight="bold">IN: C26→MBR←port_in[MAR]  →C7→BR  →C20→ACC</text>
+<text x="480" y="576" text-anchor="middle" fill="#92400e" font-size="12">OUT: C25→port_out[MAR]←ACC</text>
 </svg>
 </div>
 
@@ -466,18 +466,8 @@ svg{display:block;margin:0 auto}
 <text x="232" y="115" text-anchor="middle" fill="#ca8a04" font-size="15" font-weight="bold">step_pulse</text>
 <text x="232" y="133" text-anchor="middle" fill="#64748b" font-size="12">1 个时钟周期</text>
 
-<!-- exec_mode label -->
-<text x="93"  y="180" text-anchor="middle" fill="#ca8a04" font-size="14" font-weight="bold">exec_mode[1:0]</text>
-<!-- step_pulse label -->
-<text x="232" y="180" text-anchor="middle" fill="#ca8a04" font-size="14" font-weight="bold">step_pulse</text>
-
-<line x1="93"  y1="183" x2="93"  y2="230" stroke="#ca8a04" stroke-width="2.5" stroke-dasharray="5,3" marker-end="url(#e2)"/>
-<line x1="232" y1="183" x2="232" y2="230" stroke="#ca8a04" stroke-width="2.5" stroke-dasharray="5,3" marker-end="url(#e2)"/>
-
-<text x="161" y="248" text-anchor="middle" fill="#1d4ed8" font-size="13">→ ControlUnit</text>
-
-<!-- ── Center: ControlUnit ── -->
-<rect x="328" y="16" width="368" height="430" rx="12" fill="white" stroke="#2563eb" stroke-width="2.5"/>
+<!-- ── Center: ControlUnit (extended to enclose all sub-modules incl. capture_pulse note) ── -->
+<rect x="328" y="16" width="368" height="485" rx="12" fill="white" stroke="#2563eb" stroke-width="2.5"/>
 <text x="512" y="40" text-anchor="middle" fill="#1e40af" font-size="17" font-weight="bold">ControlUnit</text>
 
 <!-- inject_trigger box -->
@@ -521,8 +511,13 @@ svg{display:block;margin:0 auto}
 <text x="512" y="457" text-anchor="middle" fill="#6b21a8" font-size="14" font-weight="bold">capture_pulse → VGA 历史快照</text>
 <text x="512" y="475" text-anchor="middle" fill="#7e22ce" font-size="13">mode 01: C2 时 · mode 10: 每次 step_pulse</text>
 
-<!-- Arrows: inputs → ControlUnit -->
-<line x1="161" y1="266" x2="328" y2="200" stroke="#ca8a04" stroke-width="2.5" stroke-dasharray="6,3" marker-end="url(#e2)"/>
+<!-- ══ 模式输入 → ControlUnit.can_step : two separate clean arrows (drawn last so heads sit on top) ══ -->
+<!-- step_pulse: BTNC → can_step (enters upper) -->
+<path d="M 232,150 L 232,185 L 344,185" fill="none" stroke="#ca8a04" stroke-width="2.5" marker-end="url(#e2)"/>
+<text x="268" y="179" text-anchor="middle" fill="#ca8a04" font-size="13" font-weight="bold">step_pulse</text>
+<!-- exec_mode: SW → can_step (enters lower; routed below step_pulse to avoid crossing) -->
+<path d="M 93,150 L 93,210 L 344,210" fill="none" stroke="#ca8a04" stroke-width="2.5" stroke-dasharray="5,3" marker-end="url(#e2)"/>
+<text x="150" y="204" text-anchor="middle" fill="#ca8a04" font-size="13" font-weight="bold">exec_mode[1:0]</text>
 
 <!-- ── Right: 3 mode behavior boxes ── -->
 <!-- Mode 00 -->
