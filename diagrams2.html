@@ -53,48 +53,50 @@ svg{display:block;margin:0 auto}
 <rect width="1160" height="640" fill="#f0f7ff"/>
 
 <!-- Physical input labels (top) -->
-<text x="96"  y="17" text-anchor="middle" fill="#64748b" font-size="13">ps2_clk / ps2_data</text>
-<line x1="96"  y1="19" x2="96"  y2="58" stroke="#15803d" stroke-width="2" stroke-dasharray="4,3" marker-end="url(#c2)"/>
 <text x="285" y="17" text-anchor="middle" fill="#64748b" font-size="13">clk · reset</text>
 <line x1="285" y1="19" x2="285" y2="50" stroke="#94a3b8" stroke-width="2" marker-end="url(#c5)"/>
 <text x="410" y="17" text-anchor="middle" fill="#d97706"  font-size="13">exec_mode (sw[15:14])</text>
 <line x1="410" y1="19" x2="410" y2="50" stroke="#d97706" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#c3)"/>
 <text x="530" y="17" text-anchor="middle" fill="#64748b" font-size="13">port_in[0] (sw[11:0])</text>
 <line x1="530" y1="19" x2="530" y2="50" stroke="#1d4ed8" stroke-width="2" marker-end="url(#c1)"/>
-<text x="96"  y="442" text-anchor="middle" fill="#d97706" font-size="13">btn_step</text>
-<line x1="96"  y1="444" x2="96"  y2="454" stroke="#d97706" stroke-width="2" marker-end="url(#c3)"/>
+<text x="96"  y="72" text-anchor="middle" fill="#d97706" font-size="13">btn_step</text>
+<line x1="96"  y1="76" x2="96"  y2="90" stroke="#d97706" stroke-width="2" marker-end="url(#c3)"/>
+
+<!-- ── PS/2 chain moved to far right, beside vga_display ── -->
+<text x="1081" y="252" text-anchor="middle" fill="#64748b" font-size="13">ps2_clk / ps2_data</text>
+<line x1="1081" y1="254" x2="1081" y2="274" stroke="#15803d" stroke-width="2" stroke-dasharray="4,3" marker-end="url(#c2)"/>
 
 <!-- ── PS2_receiver ── -->
-<rect x="18"  y="58"  width="156" height="72" rx="10" fill="white" stroke="#2563eb" stroke-width="2"/>
-<text x="96"  y="84"  text-anchor="middle" fill="#1e40af" font-size="15" font-weight="bold">PS2_receiver</text>
-<text x="96"  y="104" text-anchor="middle" fill="#475569" font-size="13">PS/2 协议硬件解码</text>
-<text x="96"  y="121" text-anchor="middle" fill="#64748b" font-size="12">key_data[7:0] · key_valid</text>
+<rect x="1006" y="274" width="150" height="72" rx="10" fill="white" stroke="#2563eb" stroke-width="2"/>
+<text x="1081" y="300" text-anchor="middle" fill="#1e40af" font-size="15" font-weight="bold">PS2_receiver</text>
+<text x="1081" y="320" text-anchor="middle" fill="#475569" font-size="13">PS/2 协议硬件解码</text>
+<text x="1081" y="337" text-anchor="middle" fill="#64748b" font-size="12">key_data · key_valid</text>
 
 <!-- ── ps2_decoder ── -->
-<rect x="18"  y="178" width="156" height="72" rx="10" fill="white" stroke="#2563eb" stroke-width="2"/>
-<text x="96"  y="204" text-anchor="middle" fill="#1e40af" font-size="15" font-weight="bold">ps2_decoder</text>
-<text x="96"  y="224" text-anchor="middle" fill="#475569" font-size="13">Set-2 扫描码解析</text>
-<text x="96"  y="241" text-anchor="middle" fill="#64748b" font-size="12">char_data · is_enter…</text>
+<rect x="1006" y="366" width="150" height="72" rx="10" fill="white" stroke="#2563eb" stroke-width="2"/>
+<text x="1081" y="392" text-anchor="middle" fill="#1e40af" font-size="15" font-weight="bold">ps2_decoder</text>
+<text x="1081" y="412" text-anchor="middle" fill="#475569" font-size="13">Set-2 扫描码解析</text>
+<text x="1081" y="429" text-anchor="middle" fill="#64748b" font-size="12">char_data · is_enter…</text>
 
 <!-- ── btn_debounce ── -->
-<rect x="18"  y="454" width="156" height="65" rx="10" fill="white" stroke="#2563eb" stroke-width="2"/>
-<text x="96"  y="480" text-anchor="middle" fill="#1e40af" font-size="15" font-weight="bold">btn_debounce</text>
-<text x="96"  y="500" text-anchor="middle" fill="#475569" font-size="13">去抖 + 边沿检测</text>
-<text x="96"  y="516" text-anchor="middle" fill="#d97706" font-size="13" font-weight="bold">→ step_pulse</text>
+<rect x="18"  y="90" width="156" height="65" rx="10" fill="white" stroke="#2563eb" stroke-width="2"/>
+<text x="96"  y="116" text-anchor="middle" fill="#1e40af" font-size="15" font-weight="bold">btn_debounce</text>
+<text x="96"  y="136" text-anchor="middle" fill="#475569" font-size="13">去抖 + 边沿检测</text>
+<text x="96"  y="152" text-anchor="middle" fill="#d97706" font-size="13" font-weight="bold">→ step_pulse</text>
 
-<!-- PS2 chain arrows -->
-<line x1="96" y1="130" x2="96" y2="178" stroke="#15803d" stroke-width="2.5" marker-end="url(#c2)"/>
+<!-- PS2 chain arrow: receiver → decoder -->
+<line x1="1081" y1="346" x2="1081" y2="366" stroke="#15803d" stroke-width="2.5" marker-end="url(#c2)"/>
 
-<!-- ps2_decoder → vga_display (route below CPU_top via y=595, now enters at x=722) -->
-<path d="M 174,214 L 194,214 L 194,595 L 722,595 L 722,440" fill="none" stroke="#15803d" stroke-width="2.5" marker-end="url(#c2)"/>
-<text x="455" y="591" text-anchor="middle" fill="#15803d" font-size="13" font-weight="bold">char_data / is_enter / is_backspace</text>
+<!-- ps2_decoder → vga_display Panel D (short, direct, leftward) -->
+<line x1="1006" y1="402" x2="960" y2="402" stroke="#15803d" stroke-width="2.5" marker-end="url(#c2)"/>
+<text x="983" y="394" text-anchor="middle" fill="#15803d" font-size="12" font-weight="bold">char_data</text>
 
 <!-- btn_debounce → CPU_top (ControlUnit) -->
-<line x1="174" y1="487" x2="212" y2="487" stroke="#d97706" stroke-width="2.5" marker-end="url(#c3)"/>
-<text x="193" y="480" text-anchor="middle" fill="#d97706" font-size="13">step_pulse</text>
+<line x1="174" y1="120" x2="226" y2="112" stroke="#d97706" stroke-width="2.5" marker-end="url(#c3)"/>
+<text x="200" y="105" text-anchor="middle" fill="#d97706" font-size="13">step_pulse</text>
 
 <!-- ── CPU_top container ── -->
-<rect x="212" y="50"  width="380" height="545" rx="12" fill="white" stroke="#2563eb" stroke-width="2.5" stroke-dasharray="9,4"/>
+<rect x="212" y="50"  width="380" height="420" rx="12" fill="white" stroke="#2563eb" stroke-width="2.5" stroke-dasharray="9,4"/>
 <text x="402" y="72"  text-anchor="middle" fill="#1e40af" font-size="17" font-weight="bold">CPU_top</text>
 
 <!-- ControlUnit -->
@@ -137,9 +139,9 @@ svg{display:block;margin:0 auto}
 <text x="401" y="435" text-anchor="middle" fill="#78350f" font-size="13">MAR · MBR · PC · IR · BR · ACC · MR</text>
 
 <!-- MAR to memories (dashed) -->
-<line x1="325" y1="390" x2="394" y2="342" stroke="#1d4ed8" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#c1)"/>
-<line x1="370" y1="390" x2="422" y2="242" stroke="#1d4ed8" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#c1)"/>
-<text x="350" y="360" fill="#64748b" font-size="11">MAR</text>
+<line x1="350" y1="390" x2="394" y2="320" stroke="#1d4ed8" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#c1)"/>
+<line x1="350" y1="390" x2="412" y2="242" stroke="#1d4ed8" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#c1)"/>
+<text x="356" y="378" fill="#64748b" font-size="11">MAR</text>
 
 <!-- ── vga_display (shifted +100px: x=722) ── -->
 <rect x="722" y="50"  width="238" height="500" rx="12" fill="white" stroke="#2563eb" stroke-width="2.5"/>
@@ -200,9 +202,9 @@ svg{display:block;margin:0 auto}
 <line x1="722" y1="389" x2="592" y2="389" stroke="#6d28d9" stroke-width="2.5" marker-end="url(#c4)"/>
 <text x="657" y="378" text-anchor="middle" fill="#6d28d9" font-size="13" font-weight="700">inj_req / inj_instr</text>
 
-<!-- 5. port_out[0]: FROM CPU_top right (x=592, y=599) → seven_seg left (x=722) -->
-<line x1="592" y1="599" x2="722" y2="599" stroke="#1d4ed8" stroke-width="2.5" marker-end="url(#c1)"/>
-<text x="657" y="590" text-anchor="middle" fill="#1d4ed8" font-size="13" font-weight="700">port_out[0]</text>
+<!-- 5. port_out[0]: FROM CPU_top bottom (y=470) → down → seven_seg left (x=722, y=599) -->
+<path d="M 500,470 L 500,599 L 722,599" fill="none" stroke="#1d4ed8" stroke-width="2.5" stroke-linejoin="round" marker-end="url(#c1)"/>
+<text x="600" y="590" text-anchor="middle" fill="#1d4ed8" font-size="13" font-weight="700">port_out[0]</text>
 
 <!-- vga_display → monitor -->
 <line x1="960" y1="464" x2="990" y2="464" stroke="#db2777" stroke-width="2.5" marker-end="url(#c1)"/>
